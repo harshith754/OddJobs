@@ -101,15 +101,15 @@ async function postgrest<T>(
   init: RequestInit = {},
   preferSingle = false
 ): Promise<T> {
-  if (!config.supabaseUrl || !config.supabaseServiceRoleKey) {
+  if (!config.supabaseUrl || !config.supabaseSecretKey) {
     throw new Error("Supabase persistence is not configured");
   }
 
   const response = await fetch(`${config.supabaseUrl}/rest/v1${path}`, {
     ...init,
     headers: {
-      apikey: config.supabaseServiceRoleKey,
-      Authorization: `Bearer ${config.supabaseServiceRoleKey}`,
+      apikey: config.supabaseSecretKey,
+      Authorization: `Bearer ${config.supabaseSecretKey}`,
       "Content-Type": "application/json",
       Prefer: preferSingle ? "return=representation" : "return=representation",
       ...(init.headers ?? {})
@@ -126,7 +126,7 @@ async function postgrest<T>(
 }
 
 async function uploadToStorage(storagePath: string, file: File): Promise<void> {
-  if (!config.supabaseUrl || !config.supabaseServiceRoleKey) {
+  if (!config.supabaseUrl || !config.supabaseSecretKey) {
     throw new Error("Supabase persistence is not configured");
   }
 
@@ -135,8 +135,8 @@ async function uploadToStorage(storagePath: string, file: File): Promise<void> {
     {
       method: "POST",
       headers: {
-        apikey: config.supabaseServiceRoleKey,
-        Authorization: `Bearer ${config.supabaseServiceRoleKey}`,
+        apikey: config.supabaseSecretKey,
+        Authorization: `Bearer ${config.supabaseSecretKey}`,
         "Content-Type": file.type || "image/jpeg",
         "x-upsert": "true"
       },
@@ -586,4 +586,3 @@ const supabaseRepository: StreamRepository = {
 export function getStreamRepository(): StreamRepository {
   return hasSupabasePersistence(config) ? supabaseRepository : inMemoryRepository;
 }
-

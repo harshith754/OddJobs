@@ -46,13 +46,13 @@ This repo is scaffolded for implementation. It is not yet dependency-installed o
 3. Create a Next.js app environment for `web/` with `npm install`.
 4. Copy `web/.env.example` to `web/.env.local` and fill in provider values.
 5. Provision the database/storage project and apply `db/migrations/0001_initial_schema.sql`.
-6. Create the `stream-images` storage bucket.
+6. The `stream-images` bucket is created by migration `0002_create_stream_images_bucket.sql`.
 
 ## Web Persistence
 
 The web/API layer now supports two persistence modes:
 
-- **Supabase-backed mode** when `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set
+- **Supabase-backed mode** when `SUPABASE_URL` and `SUPABASE_SECRET_KEY` are set
 - **in-memory fallback** when those variables are missing
 
 In Supabase-backed mode:

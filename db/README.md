@@ -41,15 +41,16 @@ But the folder layout and migration history are intentionally provider-neutral s
 ## Initial Setup
 
 1. Create the Supabase project
-2. Create an object storage bucket named `stream-images`
-3. Copy `db/.env.example` to `db/.env`
-4. Fill in `SUPABASE_DB_URL`
-5. Run `db/scripts/push.sh`
-6. Copy `web/.env.example` to `web/.env.local`
-7. Fill in:
+2. Copy `db/.env.example` to `db/.env`
+3. Fill in `SUPABASE_DB_URL`
+4. Run `db/scripts/push.sh`
+5. Copy `web/.env.example` to `web/.env.local`
+6. Fill in:
    - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `SUPABASE_SECRET_KEY`
    - `SUPABASE_STORAGE_BUCKET`
+
+The migrations include creation of the public `stream-images` bucket, so object storage setup is also driven from code.
 
 ## Notes
 

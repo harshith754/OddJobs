@@ -11,6 +11,7 @@ Drafted and approved for initial implementation.
 - The app currently keeps only the latest local frame file for on-device verification.
 - Android backend upload is still stubbed locally and does not yet send frames to Supabase or the Next.js API.
 - Web/API session and image persistence are implemented behind a repository layer with Supabase-backed mode and in-memory fallback.
+- Database and storage bucket setup are migration-driven in `db/migrations/`.
 - Viewer URL, web history, and backend session/image persistence remain target behavior until Android is wired to send real uploads end to end.
 
 ## Product Summary
