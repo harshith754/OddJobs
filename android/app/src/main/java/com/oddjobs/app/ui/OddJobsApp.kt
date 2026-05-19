@@ -1,7 +1,6 @@
 package com.oddjobs.app.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -18,7 +17,7 @@ fun OddJobsApp() {
     val frameStreamViewModel: FrameStreamViewModel = viewModel()
     val settingsViewModel: SettingsViewModel = viewModel()
 
-    MaterialTheme {
+    OddJobsTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             NavHost(navController = navController, startDestination = "home") {
                 composable("home") {
