@@ -10,12 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.CameraAlt
-import androidx.compose.material.icons.outlined.ContentPaste
-import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.UploadFile
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -51,34 +47,6 @@ fun HomeScreen(
             status = "Available",
             icon = Icons.Outlined.CameraAlt,
             enabled = true
-        ),
-        OddJobCardModel(
-            title = "Quick Capture",
-            description = "One-shot capture workflow.",
-            status = "Coming soon",
-            icon = Icons.Outlined.Build,
-            enabled = false
-        ),
-        OddJobCardModel(
-            title = "File Drop",
-            description = "Push files to a private destination.",
-            status = "Coming soon",
-            icon = Icons.Outlined.UploadFile,
-            enabled = false
-        ),
-        OddJobCardModel(
-            title = "Clipboard Sync",
-            description = "Move snippets across devices.",
-            status = "Coming soon",
-            icon = Icons.Outlined.ContentPaste,
-            enabled = false
-        ),
-        OddJobCardModel(
-            title = "Reminder Ping",
-            description = "Send a small personal reminder.",
-            status = "Coming soon",
-            icon = Icons.Outlined.Notifications,
-            enabled = false
         )
     )
 
