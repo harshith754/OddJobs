@@ -85,6 +85,46 @@ button {
   gap: 8px;
 }
 
+.carousel {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(180px, 220px);
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.carouselItem {
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #30363d;
+  background: #0d1117;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.carouselItemSelected {
+  border-color: #2f81f7;
+  box-shadow: 0 0 0 1px #2f81f7;
+}
+
+.carouselThumb {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  background: #161b22;
+}
+
+.carouselMeta {
+  font-size: 14px;
+  color: #8b949e;
+}
+
 .toolbar {
   display: flex;
   align-items: center;
@@ -99,15 +139,6 @@ button {
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid #30363d;
-}
-
-.button {
-  border: 1px solid #30363d;
-  background: #21262d;
-  color: #e6edf3;
-  padding: 10px 14px;
-  border-radius: 8px;
-  cursor: pointer;
 }
 
 .errorText {

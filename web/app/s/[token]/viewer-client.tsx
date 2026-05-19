@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { PublicHistoryResponse, PublicLatestResponse } from "../../../lib/types";
+import {
+  PublicHistoryResponse,
+  PublicLatestResponse,
+  StreamImage
+} from "../../../lib/types";
 
 type ViewerClientProps = {
   token: string;
@@ -25,14 +29,12 @@ export function ViewerClient({
 }: ViewerClientProps) {
   const [latest, setLatest] = useState(initialLatest);
   const [history, setHistory] = useState(initialHistory);
-  const [isAutoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(
+    initialLatest.latestImage?.id ?? initialHistory.images[0]?.id ?? null
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAutoRefreshEnabled) {
-      return;
-    }
-
     const interval = window.setInterval(async () => {
       try {
         const [latestResponse, historyResponse] = await Promise.all([
@@ -52,7 +54,16 @@ export function ViewerClient({
     }, 1_000);
 
     return () => window.clearInterval(interval);
-  }, [isAutoRefreshEnabled, token]);
+  }, [token]);
+
+  useEffect(() => {
+    const availableIds = new Set(history.images.map((image) => image.id));
+    if (selectedImageId && availableIds.has(selectedImageId)) {
+      return;
+    }
+
+    setSelectedImageId(latest.latestImage?.id ?? history.images[0]?.id ?? null);
+  }, [history.images, latest.latestImage, selectedImageId]);
 
   const lastUpdatedLabel = useMemo(() => {
     if (latest.latestImage == null) {
@@ -61,6 +72,17 @@ export function ViewerClient({
 
     return new Date(latest.latestImage.createdAt).toLocaleString();
   }, [latest.latestImage]);
+
+  const selectedImage: StreamImage | null = useMemo(() => {
+    if (selectedImageId == null) {
+      return latest.latestImage;
+    }
+
+    return (
+      history.images.find((image) => image.id === selectedImageId) ??
+      latest.latestImage
+    );
+  }, [history.images, latest.latestImage, selectedImageId]);
 
   return (
     <>
@@ -75,30 +97,35 @@ export function ViewerClient({
       <section className="panel stack">
         <div className="toolbar">
           <div className="stack">
-            <h2>Latest Frame</h2>
-            <p className="muted">Polling every second for MVP.</p>
+            <h2>Live Frames</h2>
+            <p className="muted">Auto-refreshing every second.</p>
           </div>
-          <button
-            className="button"
-            onClick={() => setAutoRefreshEnabled((current) => !current)}
-            type="button"
-          >
-            {isAutoRefreshEnabled ? "Pause refresh" : "Resume refresh"}
-          </button>
+          <p className="muted">
+            Latest: {latest.latestImage?.sequenceNumber ?? "none"} | Updated{" "}
+            {lastUpdatedLabel}
+          </p>
         </div>
         {error ? <p className="errorText">{error}</p> : null}
-        {latest.latestImage ? (
-          <>
-            <img
-              className="frame"
-              src={latest.latestImage.imageUrl}
-              alt="Latest uploaded frame"
-            />
-            <p className="muted">
-              Sequence {latest.latestImage.sequenceNumber} | Updated{" "}
-              {lastUpdatedLabel}
-            </p>
-          </>
+        {history.images.length > 0 ? (
+          <div className="carousel" role="list" aria-label="Frame history carousel">
+            {history.images.map((image) => (
+              <button
+                key={image.id}
+                className={`carouselItem${
+                  image.id === selectedImageId ? " carouselItemSelected" : ""
+                }`}
+                onClick={() => setSelectedImageId(image.id)}
+                type="button"
+              >
+                <img
+                  className="carouselThumb"
+                  src={image.imageUrl}
+                  alt={`Frame ${image.sequenceNumber}`}
+                />
+                <span className="carouselMeta">#{image.sequenceNumber}</span>
+              </button>
+            ))}
+          </div>
         ) : (
           <p className="muted">No image uploaded yet.</p>
         )}
@@ -106,24 +133,36 @@ export function ViewerClient({
 
       <section className="panel stack">
         <div>
-          <h2>Recent History</h2>
+          <h2>Selected Frame</h2>
           <p className="muted">
-            Latest-first session history for the current permanent stream link.
+            Click any frame in the carousel to inspect it here.
           </p>
         </div>
-        <div className="historyList">
-          {history.images.map((image) => (
-            <div key={image.id} className="historyItem">
-              <strong>Frame {image.sequenceNumber}</strong>
-              <span className="muted">
-                {new Date(image.createdAt).toLocaleString()}
-              </span>
-              <span className="muted">Session {image.sessionId}</span>
+        {selectedImage ? (
+          <>
+            <img
+              className="frame"
+              src={selectedImage.imageUrl}
+              alt={`Selected frame ${selectedImage.sequenceNumber}`}
+            />
+            <div className="historyList">
+              <div className="historyItem">
+                <strong>Frame {selectedImage.sequenceNumber}</strong>
+                <span className="muted">
+                  {new Date(selectedImage.createdAt).toLocaleString()}
+                </span>
+                <span className="muted">Session {selectedImage.sessionId}</span>
+                <span className="muted">
+                  {selectedImage.width}x{selectedImage.height} |{" "}
+                  {selectedImage.fileSizeBytes} bytes
+                </span>
+              </div>
             </div>
-          ))}
-        </div>
+          </>
+        ) : (
+          <p className="muted">No frame selected.</p>
+        )}
       </section>
     </>
   );
 }
-
