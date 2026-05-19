@@ -1,0 +1,13 @@
+.DS_Store
+.gradle/
+build/
+*/build/
+.idea/
+local.properties
+node_modules/
+.next/
+out/
+.env
+.env.local
+.vercel/
+
