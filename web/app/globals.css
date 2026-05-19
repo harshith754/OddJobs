@@ -141,6 +141,15 @@ button {
   border: 1px solid #30363d;
 }
 
+.button {
+  border: 1px solid #30363d;
+  background: #21262d;
+  color: #e6edf3;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
 .errorText {
   color: #ffb4ab;
 }

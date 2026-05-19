@@ -33,6 +33,7 @@ export function ViewerClient({
     initialLatest.latestImage?.id ?? initialHistory.images[0]?.id ?? null
   );
   const [error, setError] = useState<string | null>(null);
+  const [copyState, setCopyState] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = window.setInterval(async () => {
@@ -84,6 +85,42 @@ export function ViewerClient({
     );
   }, [history.images, latest.latestImage, selectedImageId]);
 
+  async function handleCopySelectedImage() {
+    if (selectedImage == null) {
+      return;
+    }
+
+    try {
+      const response = await fetch(selectedImage.imageUrl, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`Image fetch failed: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      if (
+        typeof ClipboardItem !== "undefined" &&
+        navigator.clipboard &&
+        "write" in navigator.clipboard
+      ) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            [blob.type || "image/jpeg"]: blob
+          })
+        ]);
+        setCopyState("Image copied");
+      } else if (navigator.clipboard && "writeText" in navigator.clipboard) {
+        await navigator.clipboard.writeText(selectedImage.imageUrl);
+        setCopyState("Image URL copied");
+      } else {
+        throw new Error("Clipboard is not available in this browser");
+      }
+    } catch (copyError) {
+      setCopyState(
+        copyError instanceof Error ? copyError.message : "Failed to copy image"
+      );
+    }
+  }
+
   return (
     <>
       <section className="hero">
@@ -132,11 +169,22 @@ export function ViewerClient({
       </section>
 
       <section className="panel stack">
-        <div>
-          <h2>Selected Frame</h2>
-          <p className="muted">
-            Click any frame in the carousel to inspect it here.
-          </p>
+        <div className="toolbar">
+          <div>
+            <h2>Selected Frame</h2>
+            <p className="muted">
+              Click any frame in the carousel to inspect it here.
+            </p>
+          </div>
+          {selectedImage ? (
+            <button
+              className="button"
+              onClick={handleCopySelectedImage}
+              type="button"
+            >
+              Copy image
+            </button>
+          ) : null}
         </div>
         {selectedImage ? (
           <>
@@ -145,6 +193,7 @@ export function ViewerClient({
               src={selectedImage.imageUrl}
               alt={`Selected frame ${selectedImage.sequenceNumber}`}
             />
+            {copyState ? <p className="muted">{copyState}</p> : null}
             <div className="historyList">
               <div className="historyItem">
                 <strong>Frame {selectedImage.sequenceNumber}</strong>
