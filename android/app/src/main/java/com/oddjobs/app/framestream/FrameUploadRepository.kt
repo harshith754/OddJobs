@@ -22,11 +22,10 @@ class StubFrameUploadRepository : FrameUploadRepository {
         return UploadReceipt(
             uploadedImages = uploadedImages,
             uploadedAt = java.time.Instant.now().toString(),
-            summary = "${framePayload.description} uploaded for $sessionId"
+            summary = "${framePayload.file.name} captured for $sessionId"
         )
     }
 
     override suspend fun endSession(sessionId: String) {
     }
 }
-

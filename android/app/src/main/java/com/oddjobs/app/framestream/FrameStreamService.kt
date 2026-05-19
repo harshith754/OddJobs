@@ -3,16 +3,22 @@ package com.oddjobs.app.framestream
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.Service
 import android.content.Intent
 import android.os.Build
-import android.os.IBinder
+import androidx.lifecycle.LifecycleService
 
-class FrameStreamService : Service() {
-    private val orchestrator = FrameStreamOrchestrator(StubFrameUploadRepository())
+class FrameStreamService : LifecycleService() {
+    private lateinit var orchestrator: FrameStreamOrchestrator
 
     override fun onCreate() {
         super.onCreate()
+        orchestrator = FrameStreamOrchestrator(
+            captureEngine = CameraXFrameCaptureEngine(
+                context = this,
+                lifecycleOwner = this
+            ),
+            repository = StubFrameUploadRepository()
+        )
         ensureNotificationChannel()
         startForeground(NOTIFICATION_ID, buildNotification("Frame Stream is ready"))
     }
@@ -52,9 +58,6 @@ class FrameStreamService : Service() {
 
         return START_STICKY
     }
-
-    override fun onBind(intent: Intent?): IBinder? = null
-
     override fun onDestroy() {
         orchestrator.shutdown()
         FrameStreamRuntime.reset()

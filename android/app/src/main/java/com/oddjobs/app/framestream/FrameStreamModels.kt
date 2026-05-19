@@ -1,5 +1,7 @@
 package com.oddjobs.app.framestream
 
+import java.io.File
+
 enum class CaptureInterval(val seconds: Int, val label: String) {
     OneSecond(1, "1s"),
     TwoSeconds(2, "2s"),
@@ -48,6 +50,7 @@ data class FrameStreamUiState(
 )
 
 data class FramePayload(
+    val file: File,
     val width: Int,
     val height: Int,
     val fileSizeBytes: Long,
@@ -66,27 +69,6 @@ data class FrameStreamServiceState(
     val session: StreamSessionSnapshot = StreamSessionSnapshot(),
     val lastUploadSummary: String = "No uploads yet"
 )
-
-fun QualityMode.toPayload(): FramePayload = when (this) {
-    QualityMode.Balanced -> FramePayload(
-        width = 1440,
-        height = 1080,
-        fileSizeBytes = 280_000,
-        description = "Balanced quality frame prepared"
-    )
-    QualityMode.High -> FramePayload(
-        width = 1920,
-        height = 1080,
-        fileSizeBytes = 520_000,
-        description = "High quality frame prepared"
-    )
-    QualityMode.Max -> FramePayload(
-        width = 2560,
-        height = 1440,
-        fileSizeBytes = 860_000,
-        description = "Max quality frame prepared"
-    )
-}
 
 fun StreamStatus.displayName(): String = when (this) {
     StreamStatus.Stopped -> "Stopped"

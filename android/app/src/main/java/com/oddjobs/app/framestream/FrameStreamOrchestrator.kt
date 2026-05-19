@@ -10,6 +10,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class FrameStreamOrchestrator(
+    private val captureEngine: CameraXFrameCaptureEngine,
     private val repository: FrameUploadRepository
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -28,6 +29,7 @@ class FrameStreamOrchestrator(
                     activeSession.copy(lastError = null)
                 }
 
+                captureEngine.start(config)
                 activeSession = session
                 FrameStreamRuntime.update(
                     FrameStreamServiceState(
@@ -43,9 +45,10 @@ class FrameStreamOrchestrator(
                         break
                     }
 
+                    val frame = captureEngine.capture(activeConfig)
                     val receipt = repository.uploadFrame(
                         sessionId = requireNotNull(activeSession.sessionId),
-                        framePayload = activeConfig.quality.toPayload()
+                        framePayload = frame
                     )
 
                     activeSession = activeSession.copy(uploadedImages = receipt.uploadedImages)
@@ -54,7 +57,7 @@ class FrameStreamOrchestrator(
                             status = StreamStatus.Running,
                             serviceRunning = true,
                             session = activeSession,
-                            lastUploadSummary = "Last upload at ${receipt.uploadedAt}"
+                            lastUploadSummary = "${receipt.summary} at ${receipt.uploadedAt}"
                         )
                     )
 
@@ -77,6 +80,7 @@ class FrameStreamOrchestrator(
 
     fun pause() {
         captureJob?.cancel()
+        captureEngine.stop()
         FrameStreamRuntime.update(
             FrameStreamServiceState(
                 status = StreamStatus.Paused,
@@ -89,6 +93,7 @@ class FrameStreamOrchestrator(
 
     fun stop() {
         captureJob?.cancel()
+        captureEngine.stop()
         val sessionId = activeSession.sessionId
         if (sessionId != null) {
             scope.launch {
@@ -101,7 +106,7 @@ class FrameStreamOrchestrator(
 
     fun shutdown() {
         captureJob?.cancel()
+        captureEngine.stop()
         scope.cancel()
     }
 }
-

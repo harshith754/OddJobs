@@ -60,4 +60,15 @@ class FrameStreamViewModel : ViewModel() {
     fun markStopped() {
         FrameStreamRuntime.reset()
     }
+
+    fun markError(message: String, cameraRelated: Boolean = false) {
+        FrameStreamRuntime.update(
+            FrameStreamServiceState(
+                status = if (cameraRelated) StreamStatus.CameraError else StreamStatus.UploadFailed,
+                serviceRunning = false,
+                session = uiState.value.session.copy(lastError = message),
+                lastUploadSummary = message
+            )
+        )
+    }
 }
