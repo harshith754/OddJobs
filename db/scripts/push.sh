@@ -4,9 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DB_DIR="$ROOT_DIR/db"
 
-if ! command -v supabase >/dev/null 2>&1; then
-  echo "supabase CLI is not installed"
-  echo "Install it first, then rerun this script."
+if ! command -v psql >/dev/null 2>&1; then
+  echo "psql is not installed"
+  echo "Install PostgreSQL client tools first, then rerun this script."
   exit 1
 fi
 
@@ -21,19 +21,28 @@ if [[ -z "${SUPABASE_DB_URL:-}" ]]; then
   exit 1
 fi
 
-TEMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TEMP_DIR"' EXIT
+psql "$SUPABASE_DB_URL" <<'SQL'
+create table if not exists oddjobs_schema_migrations (
+    filename text primary key,
+    applied_at timestamptz not null default now()
+);
+SQL
 
-mkdir -p "$TEMP_DIR/supabase"
-cp -R "$DB_DIR/migrations" "$TEMP_DIR/supabase/migrations"
+shopt -s nullglob
+for file in "$DB_DIR"/migrations/*.sql; do
+  filename="$(basename "$file")"
+  already_applied="$(
+    psql "$SUPABASE_DB_URL" -tAc \
+      "select 1 from oddjobs_schema_migrations where filename = '$filename' limit 1"
+  )"
 
-cat > "$TEMP_DIR/supabase/config.toml" <<'EOF'
-project_id = "oddjobs"
+  if [[ "$already_applied" == "1" ]]; then
+    echo "Skipping already applied migration: $filename"
+    continue
+  fi
 
-[db]
-major_version = 15
-EOF
-
-cd "$TEMP_DIR"
-supabase db push --db-url "$SUPABASE_DB_URL"
-
+  echo "Applying migration: $filename"
+  psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$file"
+  psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -c \
+    "insert into oddjobs_schema_migrations (filename) values ('$filename')"
+done

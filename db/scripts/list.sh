@@ -4,9 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DB_DIR="$ROOT_DIR/db"
 
-if ! command -v supabase >/dev/null 2>&1; then
-  echo "supabase CLI is not installed"
-  echo "Install it first, then rerun this script."
+if ! command -v psql >/dev/null 2>&1; then
+  echo "psql is not installed"
+  echo "Install PostgreSQL client tools first, then rerun this script."
   exit 1
 fi
 
@@ -21,19 +21,19 @@ if [[ -z "${SUPABASE_DB_URL:-}" ]]; then
   exit 1
 fi
 
-TEMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TEMP_DIR"' EXIT
+psql "$SUPABASE_DB_URL" <<'SQL'
+create table if not exists oddjobs_schema_migrations (
+    filename text primary key,
+    applied_at timestamptz not null default now()
+);
+SQL
 
-mkdir -p "$TEMP_DIR/supabase"
-cp -R "$DB_DIR/migrations" "$TEMP_DIR/supabase/migrations"
-
-cat > "$TEMP_DIR/supabase/config.toml" <<'EOF'
-project_id = "oddjobs"
-
-[db]
-major_version = 15
-EOF
-
-cd "$TEMP_DIR"
-supabase migration list --db-url "$SUPABASE_DB_URL"
-
+shopt -s nullglob
+for file in "$DB_DIR"/migrations/*.sql; do
+  filename="$(basename "$file")"
+  status="$(
+    psql "$SUPABASE_DB_URL" -tAc \
+      "select case when exists (select 1 from oddjobs_schema_migrations where filename = '$filename') then 'applied' else 'pending' end"
+  )"
+  echo "$filename $status"
+done

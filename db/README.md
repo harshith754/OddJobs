@@ -22,10 +22,11 @@ Use the scripts in `db/scripts/`:
 These scripts:
 
 - keep `db/` provider-neutral
-- create a temporary Supabase CLI-compatible folder at runtime
+- use plain `psql`
 - apply migrations using `SUPABASE_DB_URL`
+- track applied files in `oddjobs_schema_migrations`
 
-This avoids baking a permanent `supabase/` folder into the repo just to satisfy CLI conventions.
+This avoids baking provider-specific CLI conventions into the repo.
 
 ## Current Provider Target
 
@@ -41,12 +42,11 @@ But the folder layout and migration history are intentionally provider-neutral s
 
 1. Create the Supabase project
 2. Create an object storage bucket named `stream-images`
-3. Install the Supabase CLI
-4. Copy `db/.env.example` to `db/.env`
-5. Fill in `SUPABASE_DB_URL`
-6. Run `db/scripts/push.sh`
-7. Copy `web/.env.example` to `web/.env.local`
-8. Fill in:
+3. Copy `db/.env.example` to `db/.env`
+4. Fill in `SUPABASE_DB_URL`
+5. Run `db/scripts/push.sh`
+6. Copy `web/.env.example` to `web/.env.local`
+7. Fill in:
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `SUPABASE_STORAGE_BUCKET`
@@ -61,4 +61,3 @@ But the folder layout and migration history are intentionally provider-neutral s
 ## Important
 
 The password you shared should not be committed into the repo or hardcoded into scripts. Keep it only in `db/.env` or your shell environment.
-
