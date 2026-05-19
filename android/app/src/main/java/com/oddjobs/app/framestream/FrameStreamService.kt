@@ -9,13 +9,15 @@ import androidx.lifecycle.LifecycleService
 
 class FrameStreamService : LifecycleService() {
     private lateinit var orchestrator: FrameStreamOrchestrator
+    private lateinit var cameraLifecycleOwner: ServiceCameraLifecycleOwner
 
     override fun onCreate() {
         super.onCreate()
+        cameraLifecycleOwner = ServiceCameraLifecycleOwner().apply { start() }
         orchestrator = FrameStreamOrchestrator(
             captureEngine = CameraXFrameCaptureEngine(
                 context = this,
-                lifecycleOwner = this
+                lifecycleOwner = cameraLifecycleOwner
             ),
             repository = StubFrameUploadRepository()
         )
@@ -52,6 +54,7 @@ class FrameStreamService : LifecycleService() {
         manager.notify(NOTIFICATION_ID, buildNotification(contentText))
 
         if (intent?.action == ACTION_STOP) {
+            cameraLifecycleOwner.stop()
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
         }
@@ -60,6 +63,7 @@ class FrameStreamService : LifecycleService() {
     }
     override fun onDestroy() {
         orchestrator.shutdown()
+        cameraLifecycleOwner.destroy()
         FrameStreamRuntime.reset()
         super.onDestroy()
     }
