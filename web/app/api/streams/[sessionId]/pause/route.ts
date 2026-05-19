@@ -2,14 +2,15 @@ import { NextResponse } from "next/server";
 import { getStreamRepository } from "../../../../../lib/stream-repository";
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     sessionId: string;
-  };
+  }>;
 };
 
 export async function POST(_: Request, { params }: RouteContext) {
+  const { sessionId } = await params;
   const result = await getStreamRepository().mutateSessionStatus(
-    params.sessionId,
+    sessionId,
     "paused"
   );
 

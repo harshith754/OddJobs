@@ -3,12 +3,13 @@ import { getStreamRepository } from "../../../../../lib/stream-repository";
 import { UploadFrameRequest } from "../../../../../lib/types";
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     sessionId: string;
-  };
+  }>;
 };
 
 export async function POST(request: Request, { params }: RouteContext) {
+  const { sessionId } = await params;
   const contentType = request.headers.get("content-type") ?? "";
   let image;
 
@@ -20,7 +21,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     }
 
     image = await getStreamRepository().uploadFrame({
-      sessionId: params.sessionId,
+      sessionId,
       file: imageFile,
       sequenceNumber: Number(formData.get("sequenceNumber")) || undefined,
       width: Number(formData.get("width")) || undefined,
@@ -30,7 +31,7 @@ export async function POST(request: Request, { params }: RouteContext) {
   } else {
     const body = (await request.json().catch(() => ({}))) as UploadFrameRequest;
     image = await getStreamRepository().uploadFrame({
-      sessionId: params.sessionId,
+      sessionId,
       imageUrl: body.imageUrl,
       sequenceNumber: body.sequenceNumber,
       width: body.width,

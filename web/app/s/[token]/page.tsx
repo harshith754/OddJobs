@@ -3,15 +3,16 @@ import { ViewerClient } from "./viewer-client";
 import { getStreamRepository } from "../../../lib/stream-repository";
 
 type ViewerPageProps = {
-  params: {
+  params: Promise<{
     token: string;
-  };
+  }>;
 };
 
 export default async function ViewerPage({ params }: ViewerPageProps) {
+  const { token } = await params;
   const [latest, history] = await Promise.all([
-    getStreamRepository().getLatestFrame(params.token),
-    getStreamRepository().getHistory(params.token)
+    getStreamRepository().getLatestFrame(token),
+    getStreamRepository().getHistory(token)
   ]);
 
   if (latest == null || history == null) {
@@ -22,7 +23,7 @@ export default async function ViewerPage({ params }: ViewerPageProps) {
     <main className="page">
       <div className="container stack">
         <ViewerClient
-          token={params.token}
+          token={token}
           initialLatest={latest}
           initialHistory={history}
         />
