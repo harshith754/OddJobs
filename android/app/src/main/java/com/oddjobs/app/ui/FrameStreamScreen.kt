@@ -21,7 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.FlashlightOn
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -208,7 +207,7 @@ fun FrameStreamScreen(
                         style = MaterialTheme.typography.bodySmall
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
+                OutlinedButton(
                             onClick = {
                                 clipboardManager.setText(AnnotatedString(state.viewerUrl))
                             }
@@ -284,14 +283,6 @@ fun FrameStreamScreen(
                 ) {
                     Text("Stop")
                 }
-            }
-
-            OutlinedButton(
-                onClick = { viewModel.toggleTorch() },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Outlined.FlashlightOn, contentDescription = null)
-                Text(if (state.torchEnabled) "Torch On" else "Torch Off")
             }
 
             Card(modifier = Modifier.fillMaxWidth()) {

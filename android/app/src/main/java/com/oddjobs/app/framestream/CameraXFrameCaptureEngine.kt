@@ -2,6 +2,8 @@ package com.oddjobs.app.framestream
 
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.os.Handler
+import android.os.Looper
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -9,7 +11,9 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -24,26 +28,30 @@ class CameraXFrameCaptureEngine(
 
     suspend fun start(config: FrameStreamConfig) {
         val provider = context.awaitCameraProvider()
-        cameraProvider = provider
+        withContext(Dispatchers.Main.immediate) {
+            cameraProvider = provider
 
-        val capture = ImageCapture.Builder()
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
-            .setJpegQuality(config.quality.jpegQuality())
-            .build()
+            val capture = ImageCapture.Builder()
+                .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+                .setJpegQuality(config.quality.jpegQuality())
+                .build()
 
-        provider.unbindAll()
-        camera = provider.bindToLifecycle(
-            lifecycleOwner,
-            CameraSelector.DEFAULT_BACK_CAMERA,
-            capture
-        )
-        camera?.cameraControl?.enableTorch(config.torchEnabled)
-        imageCapture = capture
+            provider.unbindAll()
+            camera = provider.bindToLifecycle(
+                lifecycleOwner,
+                CameraSelector.DEFAULT_BACK_CAMERA,
+                capture
+            )
+            camera?.cameraControl?.enableTorch(config.torchEnabled)
+            imageCapture = capture
+        }
     }
 
     suspend fun capture(config: FrameStreamConfig): FramePayload {
         val capture = imageCapture ?: throw IllegalStateException("ImageCapture is not bound")
-        camera?.cameraControl?.enableTorch(config.torchEnabled)
+        withContext(Dispatchers.Main.immediate) {
+            camera?.cameraControl?.enableTorch(config.torchEnabled)
+        }
 
         val directory = File(context.filesDir, "frame-stream").apply { mkdirs() }
         val outputFile = File(directory, "frame-${System.currentTimeMillis()}.jpg")
@@ -78,9 +86,19 @@ class CameraXFrameCaptureEngine(
     }
 
     fun stop() {
-        cameraProvider?.unbindAll()
-        camera = null
-        imageCapture = null
+        val provider = cameraProvider ?: return
+        val clearBindings = {
+            provider.unbindAll()
+            camera = null
+            imageCapture = null
+            cameraProvider = null
+        }
+
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            clearBindings()
+        } else {
+            Handler(Looper.getMainLooper()).post(clearBindings)
+        }
     }
 }
 
