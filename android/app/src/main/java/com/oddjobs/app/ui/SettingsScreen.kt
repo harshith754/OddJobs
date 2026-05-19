@@ -9,10 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,8 +25,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.oddjobs.app.framestream.CaptureInterval
-import com.oddjobs.app.framestream.QualityMode
+import com.oddjobs.app.settings.AppSettingsStore
 import com.oddjobs.app.settings.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +42,7 @@ fun SettingsScreen(
                 title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = navigateBack) {
-                        Icon(Icons.Outlined.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -63,67 +61,26 @@ fun SettingsScreen(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Backend", style = MaterialTheme.typography.titleMedium)
+                    Text("App", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "These are OddJobs-wide settings. Job-specific controls stay inside each job screen.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
                     OutlinedTextField(
                         value = state.backendUrl,
                         onValueChange = viewModel::updateBackendUrl,
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        label = { Text("Backend URL") }
+                        label = { Text("Backend URL") },
+                        placeholder = { Text("http://192.168.1.23:3001") }
                     )
-                }
-            }
-
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text("Default Capture Interval", style = MaterialTheme.typography.titleMedium)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        CaptureInterval.entries.forEach { interval ->
-                            FilterChip(
-                                selected = state.defaultInterval == interval,
-                                onClick = { viewModel.updateInterval(interval) },
-                                label = { Text(interval.label) }
-                            )
-                        }
-                    }
-                }
-            }
-
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text("Default Quality", style = MaterialTheme.typography.titleMedium)
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        QualityMode.entries.forEach { quality ->
-                            FilterChip(
-                                selected = state.defaultQuality == quality,
-                                onClick = { viewModel.updateQuality(quality) },
-                                label = { Text(quality.label) }
-                            )
-                        }
-                    }
-                }
-            }
-
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text("Retention", style = MaterialTheme.typography.titleMedium)
-                    OutlinedTextField(
-                        value = state.keepFramesForHours.toString(),
-                        onValueChange = { value ->
-                            viewModel.updateRetentionHours(value.toIntOrNull() ?: state.keepFramesForHours)
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        label = { Text("Delete server frames after (hours)") }
+                    Text(
+                        "Use your laptop's LAN IP and the Next.js port while testing. Do not use localhost from the phone.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text(
+                        "Current default: ${AppSettingsStore.DEFAULT_BACKEND_URL}",
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
@@ -148,7 +105,23 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("About", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "OddJobs is the container app. Frame Stream is the first odd job in the app.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        "Open a job from the home screen to change that job's behavior.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
         }
     }
 }
-

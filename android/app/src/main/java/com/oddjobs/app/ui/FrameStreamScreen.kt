@@ -19,7 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material3.Button
@@ -116,7 +116,7 @@ fun FrameStreamScreen(
                 title = { Text("Frame Stream") },
                 navigationIcon = {
                     IconButton(onClick = navigateBack) {
-                        Icon(Icons.Outlined.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -312,14 +312,14 @@ fun FrameStreamScreen(
                     }
                     Text(
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            "Foreground service capture is wired to CameraX. Next step is replacing stub upload with the real backend."
+                            "Foreground service capture is wired to CameraX and uploads each frame to the configured backend."
                         } else {
-                            "Foreground capture runtime is wired for testing."
+                            "Foreground capture runtime is wired to the backend for testing."
                         },
                         style = MaterialTheme.typography.bodySmall
                     )
                     Text(
-                        "Current build saves one local frame for verification and still uses a stub upload repository.",
+                        "Current build saves one latest local frame for verification while uploading the real JPEG to the web API.",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
