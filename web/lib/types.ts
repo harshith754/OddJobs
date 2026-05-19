@@ -18,6 +18,16 @@ export type StreamSession = {
   lastImageAt: string | null;
 };
 
+export type SessionSummary = {
+  id: string;
+  streamId: string;
+  status: StreamStatus;
+  startedAt: string;
+  endedAt: string | null;
+  lastImageAt: string | null;
+  imageCount: number;
+};
+
 export type StreamImage = {
   id: string;
   sessionId: string;
@@ -72,3 +82,14 @@ export type SessionMutationResponse = {
   status: StreamStatus;
 };
 
+export type SessionListResponse = {
+  streamId: string;
+  streamName: string;
+  streamToken: string;
+  sessions: SessionSummary[];
+};
+
+export type SessionDeleteResponse = {
+  sessionId: string;
+  deletedImages: number;
+};

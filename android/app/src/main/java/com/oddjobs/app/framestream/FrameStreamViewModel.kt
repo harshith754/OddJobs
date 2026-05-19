@@ -10,12 +10,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class FrameStreamViewModel(application: Application) : AndroidViewModel(application) {
     private val settingsStore = AppSettingsStore(application)
+    private val sessionAdminRepository = HttpFrameSessionAdminRepository(settingsStore)
     private val controlsState = MutableStateFlow(FrameStreamConfig())
+    private val sessionsState = MutableStateFlow(SessionBrowserState())
     val uiState: StateFlow<FrameStreamUiState> =
-        combine(controlsState, FrameStreamRuntime.state, settingsStore.state) { controls, runtime, _ ->
+        combine(
+            controlsState,
+            FrameStreamRuntime.state,
+            settingsStore.state,
+            sessionsState
+        ) { controls, runtime, _, sessions ->
             FrameStreamUiState(
                 interval = controls.interval,
                 quality = controls.quality,
@@ -28,13 +36,21 @@ class FrameStreamViewModel(application: Application) : AndroidViewModel(applicat
                     ),
                 serviceRunning = runtime.serviceRunning,
                 session = runtime.session,
-                latestFramePath = runtime.latestFramePath
+                latestFramePath = runtime.latestFramePath,
+                sessions = sessions.items,
+                sessionsLoading = sessions.loading,
+                deletingSessionId = sessions.deletingSessionId,
+                sessionsMessage = sessions.message
             )
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = FrameStreamUiState()
         )
+
+    init {
+        refreshSessions()
+    }
 
     fun setInterval(interval: CaptureInterval) {
         controlsState.update { it.copy(interval = interval) }
@@ -71,4 +87,79 @@ class FrameStreamViewModel(application: Application) : AndroidViewModel(applicat
             )
         )
     }
+
+    fun refreshSessions() {
+        viewModelScope.launch {
+            sessionsState.update {
+                it.copy(
+                    loading = true,
+                    message = null
+                )
+            }
+            runCatching { sessionAdminRepository.listSessions() }
+                .onSuccess { sessions ->
+                    sessionsState.update {
+                        it.copy(
+                            items = sessions,
+                            loading = false,
+                            deletingSessionId = null,
+                            message = null
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    sessionsState.update {
+                        it.copy(
+                            loading = false,
+                            deletingSessionId = null,
+                            message = error.message ?: "Failed to load sessions"
+                        )
+                    }
+                }
+        }
+    }
+
+    fun deleteSession(sessionId: String) {
+        if (uiState.value.serviceRunning && uiState.value.session.sessionId == sessionId) {
+            sessionsState.update {
+                it.copy(message = "Stop the current stream before deleting its session.")
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            sessionsState.update {
+                it.copy(
+                    deletingSessionId = sessionId,
+                    message = null
+                )
+            }
+            runCatching { sessionAdminRepository.deleteSession(sessionId) }
+                .onSuccess { deletedImages ->
+                    val remaining = sessionsState.value.items.filterNot { it.id == sessionId }
+                    sessionsState.update {
+                        it.copy(
+                            items = remaining,
+                            deletingSessionId = null,
+                            message = "Deleted session and $deletedImages images."
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    sessionsState.update {
+                        it.copy(
+                            deletingSessionId = null,
+                            message = error.message ?: "Failed to delete session"
+                        )
+                    }
+                }
+        }
+    }
 }
+
+private data class SessionBrowserState(
+    val items: List<SessionSummary> = emptyList(),
+    val loading: Boolean = false,
+    val deletingSessionId: String? = null,
+    val message: String? = null
+)

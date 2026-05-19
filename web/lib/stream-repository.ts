@@ -4,6 +4,9 @@ import {
   CreateStreamSessionResponse,
   PublicHistoryResponse,
   PublicLatestResponse,
+  SessionDeleteResponse,
+  SessionListResponse,
+  SessionSummary,
   SessionMutationResponse,
   StreamImage,
   StreamRecord,
@@ -24,6 +27,8 @@ type UploadFrameInput = {
 type StreamRepository = {
   createSession(payload?: CreateStreamSessionRequest): Promise<CreateStreamSessionResponse>;
   uploadFrame(input: UploadFrameInput): Promise<StreamImage | null>;
+  listSessions(): Promise<SessionListResponse>;
+  deleteSession(sessionId: string): Promise<SessionDeleteResponse | null>;
   mutateSessionStatus(
     sessionId: string,
     status: StreamStatus
@@ -149,6 +154,44 @@ async function uploadToStorage(storagePath: string, file: File): Promise<void> {
     const body = await response.text();
     throw new Error(`Storage upload failed (${response.status}): ${body}`);
   }
+}
+
+async function deleteStorageObject(storagePath: string): Promise<void> {
+  if (!config.supabaseUrl || !config.supabaseSecretKey) {
+    throw new Error("Supabase persistence is not configured");
+  }
+
+  const response = await fetch(
+    `${config.supabaseUrl}/storage/v1/object/${config.storageBucket}/${storagePath}`,
+    {
+      method: "DELETE",
+      headers: {
+        apikey: config.supabaseSecretKey,
+        Authorization: `Bearer ${config.supabaseSecretKey}`
+      },
+      cache: "no-store"
+    }
+  );
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Storage delete failed (${response.status}): ${body}`);
+  }
+}
+
+function mapDbSessionToSummary(
+  row: DbSessionRow,
+  imageCount: number
+): SessionSummary {
+  return {
+    id: row.id,
+    streamId: row.stream_id,
+    status: row.status,
+    startedAt: row.started_at,
+    endedAt: row.ended_at,
+    lastImageAt: row.last_image_at,
+    imageCount
+  };
 }
 
 async function getMainStream(): Promise<DbStreamRow> {
@@ -295,6 +338,48 @@ const inMemoryRepository = (() => {
       stream.status = "active";
 
       return image;
+    },
+
+    async listSessions(): Promise<SessionListResponse> {
+      ensureSeedData();
+      return {
+        streamId: stream.id,
+        streamName: stream.name,
+        streamToken: stream.publicToken,
+        sessions: sessions.map((session) =>
+          mapDbSessionToSummary(
+            {
+              id: session.id,
+              stream_id: session.streamId,
+              status: session.status,
+              started_at: session.startedAt,
+              ended_at: session.endedAt,
+              last_image_at: session.lastImageAt
+            },
+            images.filter((image) => image.sessionId === session.id).length
+          )
+        )
+      };
+    },
+
+    async deleteSession(sessionId: string): Promise<SessionDeleteResponse | null> {
+      ensureSeedData();
+      const session = sessions.find((item) => item.id === sessionId);
+      if (!session) {
+        return null;
+      }
+
+      const deletedImages = images.filter((image) => image.sessionId === sessionId).length;
+      images = images.filter((image) => image.sessionId !== sessionId);
+      sessions = sessions.filter((item) => item.id !== sessionId);
+
+      const currentSession = getCurrentSession();
+      stream.status = currentSession?.status ?? "paused";
+
+      return {
+        sessionId,
+        deletedImages
+      };
     },
 
     async mutateSessionStatus(
@@ -483,6 +568,81 @@ const supabaseRepository: StreamRepository = {
     );
 
     return mapDbImageToPublicImage(image);
+  },
+
+  async listSessions(): Promise<SessionListResponse> {
+    const stream = await getMainStream();
+    const sessionRows = await postgrest<DbSessionRow[]>(
+      `/stream_sessions?stream_id=eq.${stream.id}&order=started_at.desc&select=*`
+    );
+
+    const sessions = await Promise.all(
+      sessionRows.map(async (session) => {
+        const imageRows = await postgrest<DbImageRow[]>(
+          `/stream_images?session_id=eq.${session.id}&select=id`
+        );
+        return mapDbSessionToSummary(session, imageRows.length);
+      })
+    );
+
+    return {
+      streamId: stream.id,
+      streamName: stream.name,
+      streamToken: stream.public_token,
+      sessions
+    };
+  },
+
+  async deleteSession(sessionId: string): Promise<SessionDeleteResponse | null> {
+    const sessionRows = await postgrest<DbSessionRow[]>(
+      `/stream_sessions?id=eq.${sessionId}&select=*`
+    );
+    const session = sessionRows[0];
+    if (!session) {
+      return null;
+    }
+
+    const imageRows = await postgrest<DbImageRow[]>(
+      `/stream_images?session_id=eq.${sessionId}&select=*`
+    );
+
+    await Promise.all(
+      imageRows.map((image) => deleteStorageObject(image.storage_path))
+    );
+
+    await postgrest<DbImageRow[]>(
+      `/stream_images?session_id=eq.${sessionId}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    await postgrest<DbSessionRow[]>(
+      `/stream_sessions?id=eq.${sessionId}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    const remainingActiveSessions = await postgrest<DbSessionRow[]>(
+      `/stream_sessions?stream_id=eq.${session.stream_id}&status=in.(active,paused)&select=*`
+    );
+
+    await postgrest<DbStreamRow[]>(
+      `/streams?id=eq.${session.stream_id}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          status: remainingActiveSessions[0]?.status ?? "paused",
+          updated_at: nowIso()
+        })
+      }
+    );
+
+    return {
+      sessionId,
+      deletedImages: imageRows.length
+    };
   },
 
   async mutateSessionStatus(

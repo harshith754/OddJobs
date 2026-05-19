@@ -9,6 +9,7 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,7 +22,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,6 +52,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.oddjobs.app.framestream.CaptureInterval
 import com.oddjobs.app.framestream.FrameStreamConfig
 import com.oddjobs.app.framestream.FrameStreamServiceController
@@ -75,10 +79,17 @@ fun FrameStreamScreen(
                 PackageManager.PERMISSION_GRANTED
         )
     }
-    val permissionLauncher = rememberLauncherForActivityResult(
+    var notificationGranted by remember {
+        mutableStateOf(
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+                PackageManager.PERMISSION_GRANTED
+        )
+    }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
-        cameraGranted = granted
+        notificationGranted = granted
         if (granted && pendingStart) {
             pendingStart = false
             viewModel.markStarting()
@@ -88,6 +99,31 @@ fun FrameStreamScreen(
                     quality = state.quality
                 )
             )
+        } else if (!granted && pendingStart) {
+            pendingStart = false
+            viewModel.markError(
+                "Notification permission is required so the active recording session stays visible.",
+                cameraRelated = false
+            )
+        }
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        cameraGranted = granted
+        if (granted && pendingStart) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationGranted) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                pendingStart = false
+                viewModel.markStarting()
+                serviceController.start(
+                    FrameStreamConfig(
+                        interval = state.interval,
+                        quality = state.quality
+                    )
+                )
+            }
         } else if (!granted) {
             pendingStart = false
             viewModel.markError(
@@ -101,6 +137,15 @@ fun FrameStreamScreen(
         cameraGranted =
             ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
                 PackageManager.PERMISSION_GRANTED
+        notificationGranted =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+                PackageManager.PERMISSION_GRANTED
+        viewModel.refreshSessions()
+    }
+
+    LaunchedEffect(state.session.sessionId, state.status) {
+        viewModel.refreshSessions()
     }
 
     val latestBitmap = remember(state.latestFramePath) {
@@ -145,6 +190,9 @@ fun FrameStreamScreen(
                     state.session.lastError?.let { Text("Error: $it") }
                     if (!cameraGranted) {
                         Text("Camera permission not granted", color = Color(0xFFFFB4AB))
+                    }
+                    if (!notificationGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        Text("Notification permission not granted", color = Color(0xFFFFB4AB))
                     }
                 }
             }
@@ -237,6 +285,117 @@ fun FrameStreamScreen(
                 }
             }
 
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Sessions", style = MaterialTheme.typography.titleMedium)
+                        OutlinedButton(
+                            onClick = viewModel::refreshSessions,
+                            enabled = !state.sessionsLoading
+                        ) {
+                            Icon(Icons.Outlined.Refresh, contentDescription = null)
+                            Text("Refresh")
+                        }
+                    }
+
+                    state.sessionsMessage?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall)
+                    }
+
+                    if (state.sessionsLoading && state.sessions.isEmpty()) {
+                        Text("Loading sessions...", style = MaterialTheme.typography.bodySmall)
+                    } else if (state.sessions.isEmpty()) {
+                        Text("No sessions yet.", style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            state.sessions.forEach { sessionSummary ->
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .border(
+                                            width = 1.dp,
+                                            color = Color(0xFF30363D),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        "Session ${sessionSummary.id}",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        "Status: ${sessionSummary.status}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    Text(
+                                        "Started: ${sessionSummary.startedAt}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    sessionSummary.endedAt?.let {
+                                        Text(
+                                            "Ended: $it",
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
+                                    sessionSummary.lastImageAt?.let {
+                                        Text(
+                                            "Last image: $it",
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+                                    Text(
+                                        "Images: ${sessionSummary.imageCount}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        val isCurrentSession =
+                                            state.session.sessionId == sessionSummary.id
+                                        if (isCurrentSession) {
+                                            Text(
+                                                if (state.serviceRunning) {
+                                                    "Current session"
+                                                } else {
+                                                    "Last active session"
+                                                },
+                                                style = MaterialTheme.typography.bodySmall
+                                            )
+                                        } else {
+                                            Text("", style = MaterialTheme.typography.bodySmall)
+                                        }
+                                        OutlinedButton(
+                                            onClick = {
+                                                viewModel.deleteSession(sessionSummary.id)
+                                            },
+                                            enabled = state.deletingSessionId != sessionSummary.id &&
+                                                !(state.serviceRunning && isCurrentSession)
+                                        ) {
+                                            Icon(Icons.Outlined.Delete, contentDescription = null)
+                                            Text(
+                                                if (state.deletingSessionId == sessionSummary.id) {
+                                                    "Deleting..."
+                                                } else {
+                                                    "Delete"
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -254,13 +413,21 @@ fun FrameStreamScreen(
                                 permissionLauncher.launch(Manifest.permission.CAMERA)
                             } else {
                                 cameraGranted = true
-                                viewModel.markStarting()
-                                serviceController.start(
-                                    FrameStreamConfig(
-                                        interval = state.interval,
-                                        quality = state.quality
+                                val needsNotificationPermission =
+                                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                        !notificationGranted
+                                if (needsNotificationPermission) {
+                                    pendingStart = true
+                                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                } else {
+                                    viewModel.markStarting()
+                                    serviceController.start(
+                                        FrameStreamConfig(
+                                            interval = state.interval,
+                                            quality = state.quality
+                                        )
                                     )
-                                )
+                                }
                             }
                         }
                     },
