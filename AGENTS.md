@@ -18,7 +18,7 @@ This is the canonical agent instruction file for this repository.
 
 - `android/`: Android app (`OddJobs`)
 - `web/`: Next.js viewer and API routes
-- `supabase/`: SQL schema and storage model
+- `db/`: database migrations and storage model
 - `docs/`: supporting implementation notes
 - `specs/`: product and delivery specs
 
@@ -62,9 +62,9 @@ Run commands from the repo root unless a command explicitly changes directory.
 - Run dev server: `cd web && npm run dev`
 - Production build: `cd web && npm run build`
 
-### Supabase
+### Database
 
-- Apply schema manually from `supabase/schema.sql`
+- Apply migrations manually from `db/migrations/`
 - Treat storage bucket creation as a manual infrastructure step unless explicit automation is added
 
 ## Delivery Order

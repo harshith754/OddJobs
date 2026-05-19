@@ -39,7 +39,3 @@ insert into streams (name, public_token, status, default_interval_seconds, defau
 values ('Main Frame Stream', 'main-frame-stream', 'paused', 2, 'high')
 on conflict (public_token) do nothing;
 
--- Storage bucket to create manually in Supabase:
--- name: stream-images
--- path model: streams/{streamId}/sessions/{sessionId}/frames/{sequence}.jpg
-

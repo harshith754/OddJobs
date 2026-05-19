@@ -24,7 +24,7 @@
 
 ## Web/Backend Work
 
-1. Replace mock data with Supabase queries.
+1. Replace mock data with provider-backed queries and object storage persistence.
 2. Implement:
    - `POST /api/streams`
    - `POST /api/streams/{sessionId}/images`

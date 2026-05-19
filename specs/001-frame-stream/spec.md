@@ -64,7 +64,7 @@ Current gap:
 - `stream_sessions`
 - `stream_images`
 
-See `/supabase/schema.sql` for the initial schema.
+See `/db/migrations/0001_initial_schema.sql` for the initial schema.
 
 ## Implementation Notes
 

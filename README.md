@@ -17,7 +17,7 @@ OddJobs/
   specs/       Product and implementation specs
   android/     Android app (Kotlin + Compose)
   web/         Next.js viewer + API routes
-  supabase/    SQL schema and storage notes
+  db/          Database migrations and storage notes
   docs/        Supporting implementation notes
 ```
 
@@ -33,7 +33,7 @@ OddJobs/
 
 - Specs live first under `specs/`
 - Code is shaped to match approved specs
-- `android/`, `web/`, and `supabase/` are the implementation workspaces
+- `android/`, `web/`, and `db/` are the implementation workspaces
 
 ## Status
 
@@ -44,9 +44,9 @@ This repo is scaffolded for implementation. It is not yet dependency-installed o
 1. Open `android/` in Android Studio.
 2. Let Android Studio create/update the Gradle wrapper if needed.
 3. Create a Next.js app environment for `web/` with `npm install`.
-4. Copy `web/.env.example` to `web/.env.local` and fill in Supabase values.
-5. Provision Supabase and apply `supabase/schema.sql`.
-6. Create the `stream-images` storage bucket in Supabase.
+4. Copy `web/.env.example` to `web/.env.local` and fill in provider values.
+5. Provision the database/storage project and apply `db/migrations/0001_initial_schema.sql`.
+6. Create the `stream-images` storage bucket.
 
 ## Web Persistence
 
