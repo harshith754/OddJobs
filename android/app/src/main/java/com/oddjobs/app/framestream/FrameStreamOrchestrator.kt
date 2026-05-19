@@ -30,6 +30,7 @@ class FrameStreamOrchestrator(
                 }
 
                 captureEngine.start(config)
+                delay(CAMERA_WARMUP_DELAY_MS)
                 activeSession = session
                 FrameStreamRuntime.update(
                     FrameStreamServiceState(
@@ -45,7 +46,7 @@ class FrameStreamOrchestrator(
                         break
                     }
 
-                    val frame = captureEngine.capture(activeConfig)
+                    val frame = captureWithRetry()
                     val receipt = repository.uploadFrame(
                         sessionId = requireNotNull(activeSession.sessionId),
                         framePayload = frame
@@ -111,5 +112,28 @@ class FrameStreamOrchestrator(
         captureJob?.cancel()
         captureEngine.stop()
         scope.cancel()
+    }
+
+    private suspend fun captureWithRetry(): FramePayload {
+        var lastError: Exception? = null
+
+        repeat(MAX_CAPTURE_ATTEMPTS) { attempt ->
+            try {
+                return captureEngine.capture(activeConfig)
+            } catch (error: Exception) {
+                lastError = error
+                if (attempt < MAX_CAPTURE_ATTEMPTS - 1) {
+                    delay(CAPTURE_RETRY_DELAY_MS)
+                }
+            }
+        }
+
+        throw lastError ?: IllegalStateException("Capture failed")
+    }
+
+    companion object {
+        private const val CAMERA_WARMUP_DELAY_MS = 750L
+        private const val CAPTURE_RETRY_DELAY_MS = 400L
+        private const val MAX_CAPTURE_ATTEMPTS = 3
     }
 }

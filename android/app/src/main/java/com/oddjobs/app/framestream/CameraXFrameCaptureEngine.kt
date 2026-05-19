@@ -32,7 +32,7 @@ class CameraXFrameCaptureEngine(
             cameraProvider = provider
 
             val capture = ImageCapture.Builder()
-                .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 .setJpegQuality(config.quality.jpegQuality())
                 .build()
 
