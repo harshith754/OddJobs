@@ -57,7 +57,8 @@ class FrameStreamOrchestrator(
                             status = StreamStatus.Running,
                             serviceRunning = true,
                             session = activeSession,
-                            lastUploadSummary = "${receipt.summary} at ${receipt.uploadedAt}"
+                            lastUploadSummary = "${receipt.summary} at ${receipt.uploadedAt}",
+                            latestFramePath = receipt.latestFramePath
                         )
                     )
 
@@ -71,7 +72,8 @@ class FrameStreamOrchestrator(
                         status = StreamStatus.UploadFailed,
                         serviceRunning = true,
                         session = activeSession,
-                        lastUploadSummary = activeSession.lastError ?: "Upload error"
+                        lastUploadSummary = activeSession.lastError ?: "Upload error",
+                        latestFramePath = FrameStreamRuntime.state.value.latestFramePath
                     )
                 )
             }
@@ -86,7 +88,8 @@ class FrameStreamOrchestrator(
                 status = StreamStatus.Paused,
                 serviceRunning = true,
                 session = activeSession,
-                lastUploadSummary = "Capture paused, session preserved"
+                lastUploadSummary = "Capture paused, session preserved",
+                latestFramePath = FrameStreamRuntime.state.value.latestFramePath
             )
         )
     }

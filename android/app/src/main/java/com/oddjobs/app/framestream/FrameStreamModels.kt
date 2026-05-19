@@ -46,7 +46,8 @@ data class FrameStreamUiState(
     val lastUploadSummary: String = "No uploads yet",
     val viewerUrl: String = "https://oddjobs.app/s/main-frame-stream",
     val serviceRunning: Boolean = false,
-    val session: StreamSessionSnapshot = StreamSessionSnapshot()
+    val session: StreamSessionSnapshot = StreamSessionSnapshot(),
+    val latestFramePath: String? = null
 )
 
 data class FramePayload(
@@ -60,14 +61,16 @@ data class FramePayload(
 data class UploadReceipt(
     val uploadedImages: Int,
     val uploadedAt: String,
-    val summary: String
+    val summary: String,
+    val latestFramePath: String
 )
 
 data class FrameStreamServiceState(
     val status: StreamStatus = StreamStatus.Stopped,
     val serviceRunning: Boolean = false,
     val session: StreamSessionSnapshot = StreamSessionSnapshot(),
-    val lastUploadSummary: String = "No uploads yet"
+    val lastUploadSummary: String = "No uploads yet",
+    val latestFramePath: String? = null
 )
 
 fun StreamStatus.displayName(): String = when (this) {

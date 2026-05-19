@@ -3,10 +3,12 @@ package com.oddjobs.app.ui
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -42,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -54,6 +57,7 @@ import com.oddjobs.app.framestream.FrameStreamViewModel
 import com.oddjobs.app.framestream.QualityMode
 import com.oddjobs.app.framestream.StreamStatus
 import com.oddjobs.app.framestream.displayName
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,6 +103,13 @@ fun FrameStreamScreen(
         cameraGranted =
             ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
                 PackageManager.PERMISSION_GRANTED
+    }
+
+    val latestBitmap = remember(state.latestFramePath) {
+        state.latestFramePath
+            ?.takeIf { File(it).exists() }
+            ?.let(BitmapFactory::decodeFile)
+            ?.asImageBitmap()
     }
 
     Scaffold(
@@ -284,12 +295,32 @@ fun FrameStreamScreen(
             }
 
             Card(modifier = Modifier.fillMaxWidth()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    Text("Latest Captured Frame", style = MaterialTheme.typography.titleMedium)
+                    if (latestBitmap != null) {
+                        Image(
+                            bitmap = latestBitmap,
+                            contentDescription = "Latest captured frame",
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            state.latestFramePath ?: "",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "No frame saved yet. Start the stream to verify local capture.",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
                     Text(
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                             "Foreground service capture is wired to CameraX. Next step is replacing stub upload with the real backend."

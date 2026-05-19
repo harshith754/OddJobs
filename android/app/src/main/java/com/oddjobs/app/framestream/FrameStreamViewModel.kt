@@ -22,7 +22,8 @@ class FrameStreamViewModel : ViewModel() {
                 lastUploadSummary = runtime.lastUploadSummary,
                 viewerUrl = "https://oddjobs.app/s/main-frame-stream",
                 serviceRunning = runtime.serviceRunning,
-                session = runtime.session
+                session = runtime.session,
+                latestFramePath = runtime.latestFramePath
             )
         }.stateIn(
             scope = viewModelScope,
@@ -52,7 +53,8 @@ class FrameStreamViewModel : ViewModel() {
                 status = StreamStatus.Starting,
                 serviceRunning = true,
                 session = uiState.value.session,
-                lastUploadSummary = "Preparing camera and upload session"
+                lastUploadSummary = "Preparing camera and upload session",
+                latestFramePath = uiState.value.latestFramePath
             )
         )
     }
@@ -67,7 +69,8 @@ class FrameStreamViewModel : ViewModel() {
                 status = if (cameraRelated) StreamStatus.CameraError else StreamStatus.UploadFailed,
                 serviceRunning = false,
                 session = uiState.value.session.copy(lastError = message),
-                lastUploadSummary = message
+                lastUploadSummary = message,
+                latestFramePath = uiState.value.latestFramePath
             )
         )
     }

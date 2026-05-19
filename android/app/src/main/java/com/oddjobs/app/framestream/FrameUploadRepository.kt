@@ -22,7 +22,8 @@ class StubFrameUploadRepository : FrameUploadRepository {
         return UploadReceipt(
             uploadedImages = uploadedImages,
             uploadedAt = java.time.Instant.now().toString(),
-            summary = "${framePayload.file.name} captured for $sessionId"
+            summary = "${framePayload.file.name} captured for $sessionId",
+            latestFramePath = framePayload.file.absolutePath
         )
     }
 
