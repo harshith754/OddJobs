@@ -85,8 +85,7 @@ fun FrameStreamScreen(
             serviceController.start(
                 FrameStreamConfig(
                     interval = state.interval,
-                    quality = state.quality,
-                    torchEnabled = state.torchEnabled
+                    quality = state.quality
                 )
             )
         } else if (!granted) {
@@ -207,7 +206,7 @@ fun FrameStreamScreen(
                         style = MaterialTheme.typography.bodySmall
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
+                        OutlinedButton(
                             onClick = {
                                 clipboardManager.setText(AnnotatedString(state.viewerUrl))
                             }
@@ -259,8 +258,7 @@ fun FrameStreamScreen(
                                 serviceController.start(
                                     FrameStreamConfig(
                                         interval = state.interval,
-                                        quality = state.quality,
-                                        torchEnabled = state.torchEnabled
+                                        quality = state.quality
                                     )
                                 )
                             }
@@ -318,6 +316,10 @@ fun FrameStreamScreen(
                         } else {
                             "Foreground capture runtime is wired for testing."
                         },
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text(
+                        "Current build saves one local frame for verification and still uses a stub upload repository.",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }

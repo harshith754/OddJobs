@@ -4,6 +4,14 @@
 
 Drafted and approved for initial implementation.
 
+## Current Implementation Status
+
+- Android app shell is implemented and testable on device.
+- `Frame Stream` can start a foreground service and capture local camera frames at interval.
+- The app currently keeps only the latest local frame file for on-device verification.
+- Android backend upload is still stubbed locally and does not yet send frames to Supabase or the Next.js API.
+- Viewer URL, web history, and backend session/image persistence remain target behavior, not completed end-to-end behavior.
+
 ## Product Summary
 
 `OddJobs` is a personal Android utility app. The first odd job is `Frame Stream`, which captures high-quality still images from the Android back camera at a configured interval, uploads them to a backend, and exposes a private viewer link for other people to inspect the latest frame and recent history.
@@ -30,6 +38,9 @@ Drafted and approved for initial implementation.
 - App shows a stable viewer URL
 - Capture continues while user leaves the app for normal non-camera usage
 - A foreground service notification remains visible while active
+
+Current gap:
+- Android currently captures locally, but does not yet complete real backend upload.
 
 ### Web
 
@@ -61,3 +72,4 @@ See `/supabase/schema.sql` for the initial schema.
 - Default quality should be `High`
 - Real device target begins with Samsung S23
 - Frame retention can be cleaned up after usage, rather than aggressively limited during MVP
+- Current quality implementation is compression-based (`Balanced`/`High`/`Max` map to JPEG quality presets), not distinct camera resolution profiles yet.

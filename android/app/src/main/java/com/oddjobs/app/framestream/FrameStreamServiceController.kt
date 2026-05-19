@@ -29,7 +29,6 @@ class FrameStreamServiceController(private val context: Context) {
             if (config != null) {
                 putExtra(FrameStreamService.EXTRA_INTERVAL, config.interval.name)
                 putExtra(FrameStreamService.EXTRA_QUALITY, config.quality.name)
-                putExtra(FrameStreamService.EXTRA_TORCH, config.torchEnabled)
             }
         }
 

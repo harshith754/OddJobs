@@ -17,7 +17,6 @@ class FrameStreamViewModel : ViewModel() {
                 interval = controls.interval,
                 quality = controls.quality,
                 status = runtime.status,
-                torchEnabled = controls.torchEnabled,
                 uploadedImages = runtime.session.uploadedImages,
                 lastUploadSummary = runtime.lastUploadSummary,
                 viewerUrl = "https://oddjobs.app/s/main-frame-stream",
@@ -37,14 +36,6 @@ class FrameStreamViewModel : ViewModel() {
 
     fun setQuality(quality: QualityMode) {
         controlsState.update { it.copy(quality = quality) }
-    }
-
-    fun toggleTorch() {
-        controlsState.update { it.copy(torchEnabled = !it.torchEnabled) }
-    }
-
-    fun currentConfig(): FrameStreamConfig {
-        return controlsState.value
     }
 
     fun markStarting() {

@@ -95,7 +95,6 @@ class FrameStreamService : LifecycleService() {
         const val ACTION_STOP = "com.oddjobs.app.framestream.STOP"
         const val EXTRA_INTERVAL = "extra_interval"
         const val EXTRA_QUALITY = "extra_quality"
-        const val EXTRA_TORCH = "extra_torch"
 
         private const val CHANNEL_ID = "frame_stream"
         private const val NOTIFICATION_ID = 1001
@@ -109,11 +108,9 @@ private fun Intent.toConfig(): FrameStreamConfig {
     val quality = getStringExtra(FrameStreamService.EXTRA_QUALITY)
         ?.let(QualityMode::valueOf)
         ?: QualityMode.High
-    val torchEnabled = getBooleanExtra(FrameStreamService.EXTRA_TORCH, false)
 
     return FrameStreamConfig(
         interval = interval,
-        quality = quality,
-        torchEnabled = torchEnabled
+        quality = quality
     )
 }

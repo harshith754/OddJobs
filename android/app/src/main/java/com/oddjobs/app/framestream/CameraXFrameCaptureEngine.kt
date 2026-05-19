@@ -35,6 +35,7 @@ class CameraXFrameCaptureEngine(
     suspend fun start(config: FrameStreamConfig) {
         val provider = context.awaitCameraProvider()
         withContext(Dispatchers.Main.immediate) {
+            releaseBindingsOnMainThread()
             cameraProvider = provider
 
             val previewUseCase = Preview.Builder().build()
@@ -63,22 +64,15 @@ class CameraXFrameCaptureEngine(
                 previewUseCase,
                 capture
             )
-            camera?.cameraControl?.enableTorch(config.torchEnabled)
-            preview = previewUseCase
             imageCapture = capture
             surfaceTexture = texture
             surface = previewSurface
         }
     }
 
-    suspend fun capture(config: FrameStreamConfig): FramePayload {
+    suspend fun capture(): FramePayload {
         val capture = imageCapture ?: throw IllegalStateException("ImageCapture is not bound")
-        withContext(Dispatchers.Main.immediate) {
-            camera?.cameraControl?.enableTorch(config.torchEnabled)
-        }
-
-        val directory = File(context.filesDir, "frame-stream").apply { mkdirs() }
-        val outputFile = File(directory, "frame-${System.currentTimeMillis()}.jpg")
+        val outputFile = prepareOutputFile()
         val outputOptions = ImageCapture.OutputFileOptions.Builder(outputFile).build()
 
         val result = suspendCancellableCoroutine<ImageCapture.OutputFileResults> { continuation ->
@@ -110,17 +104,8 @@ class CameraXFrameCaptureEngine(
     }
 
     fun stop() {
-        val provider = cameraProvider ?: return
         val clearBindings = {
-            provider.unbindAll()
-            camera = null
-            preview = null
-            imageCapture = null
-            cameraProvider = null
-            surface?.release()
-            surfaceTexture?.release()
-            surface = null
-            surfaceTexture = null
+            releaseBindingsOnMainThread()
         }
 
         if (Looper.myLooper() == Looper.getMainLooper()) {
@@ -128,6 +113,28 @@ class CameraXFrameCaptureEngine(
         } else {
             Handler(Looper.getMainLooper()).post(clearBindings)
         }
+    }
+
+    private fun prepareOutputFile(): File {
+        val directory = File(context.filesDir, "frame-stream").apply { mkdirs() }
+        directory.listFiles()?.forEach { existingFile ->
+            if (existingFile.isFile) {
+                existingFile.delete()
+            }
+        }
+        return File(directory, "frame-latest.jpg")
+    }
+
+    private fun releaseBindingsOnMainThread() {
+        cameraProvider?.unbindAll()
+        camera = null
+        preview = null
+        imageCapture = null
+        cameraProvider = null
+        surface?.release()
+        surfaceTexture?.release()
+        surface = null
+        surfaceTexture = null
     }
 }
 

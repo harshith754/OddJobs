@@ -119,7 +119,7 @@ class FrameStreamOrchestrator(
 
         repeat(MAX_CAPTURE_ATTEMPTS) { attempt ->
             try {
-                return captureEngine.capture(activeConfig)
+                return captureEngine.capture()
             } catch (error: Exception) {
                 lastError = error
                 if (attempt < MAX_CAPTURE_ATTEMPTS - 1) {

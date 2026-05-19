@@ -33,15 +33,13 @@ data class StreamSessionSnapshot(
 
 data class FrameStreamConfig(
     val interval: CaptureInterval = CaptureInterval.TwoSeconds,
-    val quality: QualityMode = QualityMode.High,
-    val torchEnabled: Boolean = false
+    val quality: QualityMode = QualityMode.High
 )
 
 data class FrameStreamUiState(
     val interval: CaptureInterval = CaptureInterval.TwoSeconds,
     val quality: QualityMode = QualityMode.High,
     val status: StreamStatus = StreamStatus.Stopped,
-    val torchEnabled: Boolean = false,
     val uploadedImages: Int = 0,
     val lastUploadSummary: String = "No uploads yet",
     val viewerUrl: String = "https://oddjobs.app/s/main-frame-stream",
