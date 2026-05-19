@@ -1,25 +1,31 @@
 package com.oddjobs.app.framestream
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.oddjobs.app.settings.AppSettingsStore
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
-class FrameStreamViewModel : ViewModel() {
+class FrameStreamViewModel(application: Application) : AndroidViewModel(application) {
+    private val settingsStore = AppSettingsStore(application)
     private val controlsState = MutableStateFlow(FrameStreamConfig())
     val uiState: StateFlow<FrameStreamUiState> =
-        combine(controlsState, FrameStreamRuntime.state) { controls, runtime ->
+        combine(controlsState, FrameStreamRuntime.state, settingsStore.state) { controls, runtime, _ ->
             FrameStreamUiState(
                 interval = controls.interval,
                 quality = controls.quality,
                 status = runtime.status,
                 uploadedImages = runtime.session.uploadedImages,
                 lastUploadSummary = runtime.lastUploadSummary,
-                viewerUrl = "https://oddjobs.app/s/main-frame-stream",
+                viewerUrl = runtime.session.viewerUrl
+                    ?: settingsStore.buildViewerUrl(
+                        runtime.session.streamToken ?: AppSettingsStore.DEFAULT_STREAM_TOKEN
+                    ),
                 serviceRunning = runtime.serviceRunning,
                 session = runtime.session,
                 latestFramePath = runtime.latestFramePath

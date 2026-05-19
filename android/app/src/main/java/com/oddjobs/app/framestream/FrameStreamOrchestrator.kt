@@ -23,11 +23,7 @@ class FrameStreamOrchestrator(
         captureJob?.cancel()
         captureJob = scope.launch {
             try {
-                val session = if (activeSession.sessionId == null) {
-                    repository.createOrResumeSession(config)
-                } else {
-                    activeSession.copy(lastError = null)
-                }
+                val session = repository.startSession(config, activeSession.takeIf { it.sessionId != null })
 
                 captureEngine.start(config)
                 delay(CAMERA_WARMUP_DELAY_MS)
@@ -48,7 +44,7 @@ class FrameStreamOrchestrator(
 
                     val frame = captureWithRetry()
                     val receipt = repository.uploadFrame(
-                        sessionId = requireNotNull(activeSession.sessionId),
+                        session = activeSession,
                         framePayload = frame
                     )
 
@@ -84,6 +80,12 @@ class FrameStreamOrchestrator(
     fun pause() {
         captureJob?.cancel()
         captureEngine.stop()
+        val sessionId = activeSession.sessionId
+        if (sessionId != null) {
+            scope.launch {
+                runCatching { repository.pauseSession(sessionId) }
+            }
+        }
         FrameStreamRuntime.update(
             FrameStreamServiceState(
                 status = StreamStatus.Paused,

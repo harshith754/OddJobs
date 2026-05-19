@@ -26,6 +26,9 @@ enum class StreamStatus {
 
 data class StreamSessionSnapshot(
     val sessionId: String? = null,
+    val streamId: String? = null,
+    val streamToken: String? = null,
+    val viewerUrl: String? = null,
     val lastStartedAt: String? = null,
     val lastError: String? = null,
     val uploadedImages: Int = 0

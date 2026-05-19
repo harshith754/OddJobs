@@ -1,35 +1,18 @@
 package com.oddjobs.app.settings
 
-import androidx.lifecycle.ViewModel
-import com.oddjobs.app.framestream.CaptureInterval
-import com.oddjobs.app.framestream.QualityMode
-import kotlinx.coroutines.flow.MutableStateFlow
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 
-class SettingsViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(SettingsUiState())
-    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+class SettingsViewModel(application: Application) : AndroidViewModel(application) {
+    private val settingsStore = AppSettingsStore(application)
+    val uiState: StateFlow<SettingsUiState> = settingsStore.state
 
     fun updateBackendUrl(url: String) {
-        _uiState.update { it.copy(backendUrl = url) }
-    }
-
-    fun updateInterval(interval: CaptureInterval) {
-        _uiState.update { it.copy(defaultInterval = interval) }
-    }
-
-    fun updateQuality(quality: QualityMode) {
-        _uiState.update { it.copy(defaultQuality = quality) }
-    }
-
-    fun updateRetentionHours(hours: Int) {
-        _uiState.update { it.copy(keepFramesForHours = hours.coerceAtLeast(1)) }
+        settingsStore.updateBackendUrl(url)
     }
 
     fun toggleDebugLogs() {
-        _uiState.update { it.copy(debugLogsEnabled = !it.debugLogsEnabled) }
+        settingsStore.updateDebugLogsEnabled(!uiState.value.debugLogsEnabled)
     }
 }
-

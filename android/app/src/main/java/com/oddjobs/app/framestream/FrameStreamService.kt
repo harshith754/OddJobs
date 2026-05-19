@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Intent
 import android.os.Build
 import androidx.lifecycle.LifecycleService
+import com.oddjobs.app.settings.AppSettingsStore
 
 class FrameStreamService : LifecycleService() {
     private lateinit var orchestrator: FrameStreamOrchestrator
@@ -19,7 +20,7 @@ class FrameStreamService : LifecycleService() {
                 context = this,
                 lifecycleOwner = cameraLifecycleOwner
             ),
-            repository = StubFrameUploadRepository()
+            repository = HttpFrameUploadRepository(AppSettingsStore(this))
         )
         ensureNotificationChannel()
         startForeground(NOTIFICATION_ID, buildNotification("Frame Stream is ready"))
