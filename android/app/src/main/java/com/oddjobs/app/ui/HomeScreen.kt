@@ -14,9 +14,11 @@ import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.UploadFile
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -36,7 +38,10 @@ private data class OddJobCardModel(
 )
 
 @Composable
-fun HomeScreen(openFrameStream: () -> Unit) {
+fun HomeScreen(
+    openFrameStream: () -> Unit,
+    openSettings: () -> Unit
+) {
     val jobs = listOf(
         OddJobCardModel(
             title = "Frame Stream",
@@ -77,15 +82,22 @@ fun HomeScreen(openFrameStream: () -> Unit) {
 
     Scaffold(
         topBar = {
-            TopAppBar(title = {
-                Column {
-                    Text("OddJobs")
-                    Text(
-                        text = "Tools for oddly specific tasks.",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+            TopAppBar(
+                title = {
+                    Column {
+                        Text("OddJobs")
+                        Text(
+                            text = "Tools for oddly specific tasks.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = openSettings) {
+                        Icon(Icons.Outlined.Settings, contentDescription = "Settings")
+                    }
                 }
-            })
+            )
         }
     ) { innerPadding ->
         LazyColumn(
@@ -123,4 +135,3 @@ fun HomeScreen(openFrameStream: () -> Unit) {
         }
     }
 }
-

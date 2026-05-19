@@ -30,7 +30,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.oddjobs.app.framestream.CaptureInterval
 import com.oddjobs.app.framestream.FrameStreamServiceController
@@ -38,6 +40,8 @@ import com.oddjobs.app.framestream.FrameStreamViewModel
 import com.oddjobs.app.framestream.QualityMode
 import com.oddjobs.app.framestream.StreamStatus
 import com.oddjobs.app.framestream.displayName
+import android.content.Intent
+import android.net.Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,7 +50,9 @@ fun FrameStreamScreen(
     navigateBack: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
-    val serviceController = FrameStreamServiceController(LocalContext.current)
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+    val serviceController = FrameStreamServiceController(context)
 
     Scaffold(
         topBar = {
@@ -141,12 +147,32 @@ fun FrameStreamScreen(
                         style = MaterialTheme.typography.bodySmall
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = { }) {
+                        OutlinedButton(
+                            onClick = {
+                                clipboardManager.setText(AnnotatedString(state.viewerUrl))
+                            }
+                        ) {
                             Icon(Icons.Outlined.ContentCopy, contentDescription = null)
                             Text("Copy")
                         }
-                        OutlinedButton(onClick = { }) {
+                        OutlinedButton(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, state.viewerUrl)
+                                }
+                                context.startActivity(Intent.createChooser(intent, "Share viewer link"))
+                            }
+                        ) {
                             Text("Share")
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(state.viewerUrl))
+                                context.startActivity(intent)
+                            }
+                        ) {
+                            Text("Open")
                         }
                     }
                 }
