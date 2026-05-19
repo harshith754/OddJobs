@@ -5,8 +5,11 @@ import android.content.Intent
 import android.os.Build
 
 class FrameStreamServiceController(private val context: Context) {
-    fun start() {
-        launchService(FrameStreamService.ACTION_START)
+    fun start(config: FrameStreamConfig) {
+        launchService(
+            action = FrameStreamService.ACTION_START,
+            config = config
+        )
     }
 
     fun pause() {
@@ -17,9 +20,17 @@ class FrameStreamServiceController(private val context: Context) {
         launchService(FrameStreamService.ACTION_STOP)
     }
 
-    private fun launchService(action: String) {
+    private fun launchService(
+        action: String,
+        config: FrameStreamConfig? = null
+    ) {
         val intent = Intent(context, FrameStreamService::class.java).apply {
             this.action = action
+            if (config != null) {
+                putExtra(FrameStreamService.EXTRA_INTERVAL, config.interval.name)
+                putExtra(FrameStreamService.EXTRA_QUALITY, config.quality.name)
+                putExtra(FrameStreamService.EXTRA_TORCH, config.torchEnabled)
+            }
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -29,4 +40,3 @@ class FrameStreamServiceController(private val context: Context) {
         }
     }
 }
-

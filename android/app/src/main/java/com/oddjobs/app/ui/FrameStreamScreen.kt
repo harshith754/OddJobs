@@ -1,5 +1,8 @@
 package com.oddjobs.app.ui
 
+import android.content.Intent
+import android.net.Uri
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,13 +38,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.oddjobs.app.framestream.CaptureInterval
+import com.oddjobs.app.framestream.FrameStreamConfig
 import com.oddjobs.app.framestream.FrameStreamServiceController
 import com.oddjobs.app.framestream.FrameStreamViewModel
 import com.oddjobs.app.framestream.QualityMode
 import com.oddjobs.app.framestream.StreamStatus
 import com.oddjobs.app.framestream.displayName
-import android.content.Intent
-import android.net.Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -186,10 +188,15 @@ fun FrameStreamScreen(
                     onClick = {
                         if (state.status == StreamStatus.Running) {
                             serviceController.pause()
-                            viewModel.pauseStream()
                         } else {
-                            serviceController.start()
-                            viewModel.startStream()
+                            viewModel.markStarting()
+                            serviceController.start(
+                                FrameStreamConfig(
+                                    interval = state.interval,
+                                    quality = state.quality,
+                                    torchEnabled = state.torchEnabled
+                                )
+                            )
                         }
                     },
                     modifier = Modifier.weight(1f)
@@ -203,7 +210,7 @@ fun FrameStreamScreen(
                 OutlinedButton(
                     onClick = {
                         serviceController.stop()
-                        viewModel.stopStream()
+                        viewModel.markStopped()
                     },
                     modifier = Modifier.weight(1f)
                 ) {
@@ -227,7 +234,7 @@ fun FrameStreamScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        "Camera preview will be added once CameraX capture and foreground service wiring are in place.",
+                        "Foreground capture runtime is wired. CameraX binding and real image capture are the next implementation step.",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
