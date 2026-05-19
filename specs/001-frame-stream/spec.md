@@ -2,17 +2,19 @@
 
 ## Status
 
-Drafted and approved for initial implementation.
+Implemented and usable as a personal end-to-end build.
 
 ## Current Implementation Status
 
 - Android app shell is implemented and testable on device.
 - `Frame Stream` can start a foreground service and capture local camera frames at interval.
 - The app currently keeps only the latest local frame file for on-device verification.
-- Android backend upload is still stubbed locally and does not yet send frames to Supabase or the Next.js API.
+- Android uploads captured frames to the Next.js API and Supabase-backed storage/metadata flow.
+- Android can list prior sessions and delete a session with its associated images.
+- Android requests camera and notification permission before starting capture on supported Android versions.
 - Web/API session and image persistence are implemented behind a repository layer with Supabase-backed mode and in-memory fallback.
 - Database and storage bucket setup are migration-driven in `db/migrations/`.
-- Viewer URL, web history, and backend session/image persistence remain target behavior until Android is wired to send real uploads end to end.
+- Web viewer is deployed and usable against the public backend.
 
 ## Product Summary
 
@@ -40,9 +42,7 @@ Drafted and approved for initial implementation.
 - App shows a stable viewer URL
 - Capture continues while user leaves the app for normal non-camera usage
 - A foreground service notification remains visible while active
-
-Current gap:
-- Android currently captures locally, but does not yet complete real backend upload.
+- App can list prior sessions and delete a session with its stored images
 
 ### Web
 
@@ -51,6 +51,7 @@ Current gap:
 - Viewer shows latest uploaded image
 - Viewer shows recent history
 - Viewer supports polling-based refresh in MVP
+- Viewer presents recent frames as a live-updating carousel with selected-frame detail
 
 ### Backend
 
@@ -58,6 +59,7 @@ Current gap:
 - Sessions are created per start/stop cycle
 - Uploaded frames are stored as files with metadata rows
 - Public APIs expose latest image and history by token
+- Session management APIs expose session listing and deletion
 
 ## Data Model
 
@@ -75,3 +77,4 @@ See `/db/migrations/0001_initial_schema.sql` for the initial schema.
 - Real device target begins with Samsung S23
 - Frame retention can be cleaned up after usage, rather than aggressively limited during MVP
 - Current quality implementation is compression-based (`Balanced`/`High`/`Max` map to JPEG quality presets), not distinct camera resolution profiles yet.
+- Capture cadence is currently cycle-based (`capture + upload + sleep`), so a configured `1s` interval is not strict fixed-rate timing.

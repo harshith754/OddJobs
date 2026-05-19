@@ -91,7 +91,7 @@ class FrameStreamOrchestrator(
                 status = StreamStatus.Paused,
                 serviceRunning = true,
                 session = activeSession,
-                lastUploadSummary = "Capture paused, session preserved",
+                lastUploadSummary = "Capture paused",
                 latestFramePath = FrameStreamRuntime.state.value.latestFramePath
             )
         )

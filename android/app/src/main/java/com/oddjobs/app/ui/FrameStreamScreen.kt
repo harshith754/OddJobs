@@ -250,7 +250,7 @@ fun FrameStreamScreen(
                     }
                     Text(state.viewerUrl)
                     Text(
-                        "Stable reusable link for the one permanent V1 stream.",
+                        "Stable reusable link for your main frame stream.",
                         style = MaterialTheme.typography.bodySmall
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

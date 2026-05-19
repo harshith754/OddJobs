@@ -37,12 +37,12 @@ OddJobs/
 
 ## Status
 
-This repo is scaffolded for implementation. It is not yet dependency-installed or fully runnable in this environment.
+This repo is implemented and pushed. The Android app, web/API layer, and database/storage flow all work together for the current personal-use `Frame Stream` build.
 
-## Next Build Steps
+## Local Build Steps
 
 1. Open `android/` in Android Studio.
-2. Let Android Studio create/update the Gradle wrapper if needed.
+2. Let Android Studio create/update Gradle metadata if needed.
 3. Create a Next.js app environment for `web/` with `npm install`.
 4. Copy `web/.env.example` to `web/.env.local` and fill in provider values.
 5. Provision the database/storage project and apply `db/migrations/0001_initial_schema.sql`.
@@ -61,5 +61,9 @@ In Supabase-backed mode:
 - `stream_images` rows are stored per session
 - uploaded image files are written to Supabase Storage
 - the viewer page reads latest image and history from database-backed session data
+- the Android app creates sessions, uploads frames, and can delete old sessions with their images
 
-The Android app does not yet upload to this backend. The route contract is ready for that integration.
+## Deployed App
+
+- Viewer/API deployment: `https://odd-jobs-nu.vercel.app`
+- Default Android backend URL points to that deployment

@@ -103,8 +103,7 @@ function mapDbImageToPublicImage(row: DbImageRow): StreamImage {
 
 async function postgrest<T>(
   path: string,
-  init: RequestInit = {},
-  preferSingle = false
+  init: RequestInit = {}
 ): Promise<T> {
   if (!config.supabaseUrl || !config.supabaseSecretKey) {
     throw new Error("Supabase persistence is not configured");
@@ -116,7 +115,7 @@ async function postgrest<T>(
       apikey: config.supabaseSecretKey,
       Authorization: `Bearer ${config.supabaseSecretKey}`,
       "Content-Type": "application/json",
-      Prefer: preferSingle ? "return=representation" : "return=representation",
+      Prefer: "return=representation",
       ...(init.headers ?? {})
     },
     cache: "no-store"

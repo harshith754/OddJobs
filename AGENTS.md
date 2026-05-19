@@ -36,7 +36,7 @@ This is the canonical agent instruction file for this repository.
 
 ### Web
 
-- Next.js `15.0.3`
+- Next.js `15.0.7`
 - React `18.3.1`
 - TypeScript `5.6.3`
 
