@@ -53,7 +53,7 @@ class AppSettingsStore(context: Context) {
     }
 
     companion object {
-        const val DEFAULT_BACKEND_URL = "https://oddjobs.app"
+        const val DEFAULT_BACKEND_URL = "https://odd-jobs-nu.vercel.app"
         const val DEFAULT_STREAM_TOKEN = "main-frame-stream"
 
         private const val PREFERENCES_NAME = "oddjobs_settings"

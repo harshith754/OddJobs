@@ -45,7 +45,7 @@ data class FrameStreamUiState(
     val status: StreamStatus = StreamStatus.Stopped,
     val uploadedImages: Int = 0,
     val lastUploadSummary: String = "No uploads yet",
-    val viewerUrl: String = "https://oddjobs.app/s/main-frame-stream",
+    val viewerUrl: String = "https://odd-jobs-nu.vercel.app/s/main-frame-stream",
     val serviceRunning: Boolean = false,
     val session: StreamSessionSnapshot = StreamSessionSnapshot(),
     val latestFramePath: String? = null,
