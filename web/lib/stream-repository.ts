@@ -66,6 +66,8 @@ type DbImageRow = {
   created_at: string;
 };
 
+const FRAME_RETENTION_WINDOW_MS = 30 * 60 * 1_000;
+
 const config = getServerPersistenceConfig();
 
 function nowIso() {
@@ -260,6 +262,26 @@ const inMemoryRepository = (() => {
     );
   }
 
+  function cleanupExpiredFrames() {
+    const cutoff = Date.now() - FRAME_RETENTION_WINDOW_MS;
+    const expiredSessionIds = new Set(
+      images
+        .filter((image) => new Date(image.createdAt).getTime() < cutoff)
+        .map((image) => image.sessionId)
+    );
+
+    images = images.filter((image) => new Date(image.createdAt).getTime() >= cutoff);
+    sessions = sessions.filter((session) => {
+      if (session.status !== "ended") {
+        return true;
+      }
+      if (!expiredSessionIds.has(session.id)) {
+        return true;
+      }
+      return images.some((image) => image.sessionId === session.id);
+    });
+  }
+
   return {
     async createSession(
       payload: CreateStreamSessionRequest = {}
@@ -309,6 +331,7 @@ const inMemoryRepository = (() => {
 
     async uploadFrame(input: UploadFrameInput): Promise<StreamImage | null> {
       ensureSeedData();
+      cleanupExpiredFrames();
       const session = sessions.find((item) => item.id === input.sessionId);
       if (!session) {
         return null;
@@ -341,6 +364,7 @@ const inMemoryRepository = (() => {
 
     async listSessions(): Promise<SessionListResponse> {
       ensureSeedData();
+      cleanupExpiredFrames();
       return {
         streamId: stream.id,
         streamName: stream.name,
@@ -363,6 +387,7 @@ const inMemoryRepository = (() => {
 
     async deleteSession(sessionId: string): Promise<SessionDeleteResponse | null> {
       ensureSeedData();
+      cleanupExpiredFrames();
       const session = sessions.find((item) => item.id === sessionId);
       if (!session) {
         return null;
@@ -386,6 +411,7 @@ const inMemoryRepository = (() => {
       status: StreamStatus
     ): Promise<SessionMutationResponse | null> {
       ensureSeedData();
+      cleanupExpiredFrames();
       const session = sessions.find((item) => item.id === sessionId);
       if (!session) {
         return null;
@@ -402,6 +428,7 @@ const inMemoryRepository = (() => {
 
     async getLatestFrame(token: string): Promise<PublicLatestResponse | null> {
       ensureSeedData();
+      cleanupExpiredFrames();
       if (token !== stream.publicToken) {
         return null;
       }
@@ -422,6 +449,7 @@ const inMemoryRepository = (() => {
 
     async getHistory(token: string): Promise<PublicHistoryResponse | null> {
       ensureSeedData();
+      cleanupExpiredFrames();
       if (token !== stream.publicToken) {
         return null;
       }
@@ -566,11 +594,14 @@ const supabaseRepository: StreamRepository = {
       }
     );
 
+    await cleanupExpiredFramesForStream(session.stream_id);
+
     return mapDbImageToPublicImage(image);
   },
 
   async listSessions(): Promise<SessionListResponse> {
     const stream = await getMainStream();
+    await cleanupExpiredFramesForStream(stream.id);
     const sessionRows = await postgrest<DbSessionRow[]>(
       `/stream_sessions?stream_id=eq.${stream.id}&order=started_at.desc&select=*`
     );
@@ -690,6 +721,8 @@ const supabaseRepository: StreamRepository = {
       return null;
     }
 
+    await cleanupExpiredFramesForStream(stream.id);
+
     const sessionRows = await postgrest<DbSessionRow[]>(
       `/stream_sessions?stream_id=eq.${stream.id}&status=in.(active,paused)&order=started_at.desc&limit=1&select=*`
     );
@@ -720,6 +753,8 @@ const supabaseRepository: StreamRepository = {
       return null;
     }
 
+    await cleanupExpiredFramesForStream(stream.id);
+
     const sessionRows = await postgrest<DbSessionRow[]>(
       `/stream_sessions?stream_id=eq.${stream.id}&status=in.(active,paused)&order=started_at.desc&limit=1&select=*`
     );
@@ -741,6 +776,57 @@ const supabaseRepository: StreamRepository = {
     };
   }
 };
+
+async function cleanupExpiredFramesForStream(streamId: string): Promise<void> {
+  const sessionRows = await postgrest<DbSessionRow[]>(
+    `/stream_sessions?stream_id=eq.${streamId}&select=*`
+  );
+  if (sessionRows.length === 0) {
+    return;
+  }
+
+  const cutoffIso = new Date(Date.now() - FRAME_RETENTION_WINDOW_MS).toISOString();
+  const sessionIds = sessionRows.map((session) => session.id);
+  const expiredImages = await postgrest<DbImageRow[]>(
+    `/stream_images?session_id=in.(${sessionIds.join(",")})&created_at=lt.${encodeURIComponent(cutoffIso)}&select=*`
+  );
+
+  if (expiredImages.length > 0) {
+    await Promise.all(expiredImages.map((image) => deleteStorageObject(image.storage_path)));
+    await postgrest<DbImageRow[]>(
+      `/stream_images?id=in.(${expiredImages.map((image) => image.id).join(",")})`,
+      {
+        method: "DELETE"
+      }
+    );
+  }
+
+  const endedSessionIds = sessionRows
+    .filter((session) => session.status === "ended")
+    .map((session) => session.id);
+  if (endedSessionIds.length === 0) {
+    return;
+  }
+
+  const remainingImagesInEndedSessions = await postgrest<Pick<DbImageRow, "session_id">[]>(
+    `/stream_images?session_id=in.(${endedSessionIds.join(",")})&select=session_id`
+  );
+  const sessionsWithRemainingImages = new Set(
+    remainingImagesInEndedSessions.map((image) => image.session_id)
+  );
+  const emptyEndedSessionIds = endedSessionIds.filter(
+    (sessionId) => !sessionsWithRemainingImages.has(sessionId)
+  );
+
+  if (emptyEndedSessionIds.length > 0) {
+    await postgrest<DbSessionRow[]>(
+      `/stream_sessions?id=in.(${emptyEndedSessionIds.join(",")})`,
+      {
+        method: "DELETE"
+      }
+    );
+  }
+}
 
 export function getStreamRepository(): StreamRepository {
   return hasSupabasePersistence(config) ? supabaseRepository : inMemoryRepository;

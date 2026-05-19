@@ -30,6 +30,7 @@ Implemented and usable as a personal end-to-end build.
 - History is included in MVP
 - Background use means working while the user opens other non-camera apps
 - Phone may remain plugged in
+- Uploaded frames are automatically deleted after 30 minutes
 
 ## Acceptance Criteria
 
@@ -75,6 +76,6 @@ See `/db/migrations/0001_initial_schema.sql` for the initial schema.
 - Default interval should be `2s`
 - Default quality should be `High`
 - Real device target begins with Samsung S23
-- Frame retention can be cleaned up after usage, rather than aggressively limited during MVP
-- Current quality implementation is compression-based (`Balanced`/`High`/`Max` map to JPEG quality presets), not distinct camera resolution profiles yet.
+- Backend retention is now 30 minutes for uploaded frames, with storage objects deleted alongside metadata rows.
+- Current quality implementation is no-crop resize plus JPEG recompression, with `Balanced`/`High`/`Max` mapped to conservative long-edge targets and compression presets.
 - Capture cadence is currently cycle-based (`capture + upload + sleep`), so a configured `1s` interval is not strict fixed-rate timing.

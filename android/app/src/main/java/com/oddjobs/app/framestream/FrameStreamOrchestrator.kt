@@ -42,7 +42,7 @@ class FrameStreamOrchestrator(
                         break
                     }
 
-                    val frame = captureWithRetry()
+                    val frame = captureWithRetry(activeConfig)
                     val receipt = repository.uploadFrame(
                         session = activeSession,
                         framePayload = frame
@@ -116,12 +116,12 @@ class FrameStreamOrchestrator(
         scope.cancel()
     }
 
-    private suspend fun captureWithRetry(): FramePayload {
+    private suspend fun captureWithRetry(config: FrameStreamConfig): FramePayload {
         var lastError: Exception? = null
 
         repeat(MAX_CAPTURE_ATTEMPTS) { attempt ->
             try {
-                return captureEngine.capture()
+                return captureEngine.capture(config)
             } catch (error: Exception) {
                 lastError = error
                 if (attempt < MAX_CAPTURE_ATTEMPTS - 1) {
