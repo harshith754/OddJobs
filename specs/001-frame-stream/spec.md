@@ -10,7 +10,8 @@ Drafted and approved for initial implementation.
 - `Frame Stream` can start a foreground service and capture local camera frames at interval.
 - The app currently keeps only the latest local frame file for on-device verification.
 - Android backend upload is still stubbed locally and does not yet send frames to Supabase or the Next.js API.
-- Viewer URL, web history, and backend session/image persistence remain target behavior, not completed end-to-end behavior.
+- Web/API session and image persistence are implemented behind a repository layer with Supabase-backed mode and in-memory fallback.
+- Viewer URL, web history, and backend session/image persistence remain target behavior until Android is wired to send real uploads end to end.
 
 ## Product Summary
 

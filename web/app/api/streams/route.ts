@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { createSession, ensureSeedData } from "../../../lib/stream-store";
+import { getStreamRepository } from "../../../lib/stream-repository";
 import { CreateStreamSessionRequest } from "../../../lib/types";
 
 export async function POST(request: Request) {
-  ensureSeedData();
   const body = (await request.json().catch(() => ({}))) as CreateStreamSessionRequest;
-  return NextResponse.json(createSession(body));
+  return NextResponse.json(await getStreamRepository().createSession(body));
 }

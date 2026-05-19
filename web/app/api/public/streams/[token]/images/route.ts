@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ensureSeedData, getHistory } from "../../../../../../lib/stream-store";
+import { getStreamRepository } from "../../../../../../lib/stream-repository";
 
 type RouteContext = {
   params: {
@@ -8,8 +8,7 @@ type RouteContext = {
 };
 
 export async function GET(_: Request, { params }: RouteContext) {
-  ensureSeedData();
-  const history = getHistory(params.token);
+  const history = await getStreamRepository().getHistory(params.token);
   if (history == null) {
     return NextResponse.json({ error: "Stream not found" }, { status: 404 });
   }

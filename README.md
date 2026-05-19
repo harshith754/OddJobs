@@ -44,5 +44,22 @@ This repo is scaffolded for implementation. It is not yet dependency-installed o
 1. Open `android/` in Android Studio.
 2. Let Android Studio create/update the Gradle wrapper if needed.
 3. Create a Next.js app environment for `web/` with `npm install`.
-4. Provision Supabase and apply `supabase/schema.sql`.
-5. Replace mock API logic with real Supabase storage/database integration.
+4. Copy `web/.env.example` to `web/.env.local` and fill in Supabase values.
+5. Provision Supabase and apply `supabase/schema.sql`.
+6. Create the `stream-images` storage bucket in Supabase.
+
+## Web Persistence
+
+The web/API layer now supports two persistence modes:
+
+- **Supabase-backed mode** when `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set
+- **in-memory fallback** when those variables are missing
+
+In Supabase-backed mode:
+
+- `stream_sessions` rows are created per start/stop cycle
+- `stream_images` rows are stored per session
+- uploaded image files are written to Supabase Storage
+- the viewer page reads latest image and history from database-backed session data
+
+The Android app does not yet upload to this backend. The route contract is ready for that integration.

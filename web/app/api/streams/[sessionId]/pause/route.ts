@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ensureSeedData, mutateSessionStatus } from "../../../../../lib/stream-store";
+import { getStreamRepository } from "../../../../../lib/stream-repository";
 
 type RouteContext = {
   params: {
@@ -8,8 +8,10 @@ type RouteContext = {
 };
 
 export async function POST(_: Request, { params }: RouteContext) {
-  ensureSeedData();
-  const result = mutateSessionStatus(params.sessionId, "paused");
+  const result = await getStreamRepository().mutateSessionStatus(
+    params.sessionId,
+    "paused"
+  );
 
   if (result == null) {
     return NextResponse.json({ error: "Session not found" }, { status: 404 });
@@ -17,4 +19,3 @@ export async function POST(_: Request, { params }: RouteContext) {
 
   return NextResponse.json(result);
 }
-

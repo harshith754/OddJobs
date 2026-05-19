@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { ViewerClient } from "./viewer-client";
-import { ensureSeedData, getHistory, getLatestFrame } from "../../../lib/stream-store";
+import { getStreamRepository } from "../../../lib/stream-repository";
 
 type ViewerPageProps = {
   params: {
@@ -8,10 +8,11 @@ type ViewerPageProps = {
   };
 };
 
-export default function ViewerPage({ params }: ViewerPageProps) {
-  ensureSeedData();
-  const latest = getLatestFrame(params.token);
-  const history = getHistory(params.token);
+export default async function ViewerPage({ params }: ViewerPageProps) {
+  const [latest, history] = await Promise.all([
+    getStreamRepository().getLatestFrame(params.token),
+    getStreamRepository().getHistory(params.token)
+  ]);
 
   if (latest == null || history == null) {
     notFound();
