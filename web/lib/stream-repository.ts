@@ -176,6 +176,14 @@ async function deleteStorageObject(storagePath: string): Promise<void> {
 
   if (!response.ok) {
     const body = await response.text();
+    const isAlreadyMissing =
+      response.status === 404 ||
+      (response.status === 400 &&
+        body.includes("\"error\":\"not_found\"")) ||
+      body.includes("Object not found");
+    if (isAlreadyMissing) {
+      return;
+    }
     throw new Error(`Storage delete failed (${response.status}): ${body}`);
   }
 }
